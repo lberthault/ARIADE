@@ -1,0 +1,7 @@
+FeetData
+t = 0 : Left Foot starts a step
+t = 0 : Right Foot starts a step
+t = 0 : Left Foot starts a step
+t = 0 : Right Foot starts a step
+t = 0 : Left Foot starts a step
+t = 0 : Right Foot starts a step
