@@ -118,15 +118,47 @@ public class FootTracker : MonoBehaviour
         //DataManager.WriteDataInFile(dataFileName, simManager.GetNavConfig(), "   steps = " + StepCount + " : mLength = " + Converter.Round(TotalMeanStepLength(), 2) + " mTime = " + Converter.Round(TotalMeanStepTime(), 2) + " mPause = " + Converter.Round(TotalMeanPause(), 2));
     }
 
-    //bool startStep = false;
-    //List<float> tt = new List<float>();
+    bool startStep = false;
+    float Tse = 0.5f;
+    float t0 = 0f;
+    float dt = 999f;
 
     /* Analyses data to determine the step state */
     private int UpdateSteps(float simTime)
     {
+        if (DataCount() > 1)
+        {
+
+            
+            if (dt >= Tse && !startStep && VerticalAcceleration(data[DataCount()-2].Time) > 30f)
+            {
+                t0 = simTime;
+                dt = 0f;
+                Debug.Log("Start"); Step step = new Step(foot, simTime, -1, false);
+                steps.Add(step);
+                startStep = true;
+                return STEP_START;
+            } else if (startStep && VerticalAcceleration(data[DataCount() - 2].Time) < -30f)
+            {
+                startStep = false;
+                Debug.Log("End");
+                Step step = LastStep;
+                step.End = simTime;
+                step.setFinished(true);
+                dt = simTime - t0;
+                return STEP_END;
+            } else
+            {
+                dt = simTime - t0;
+            }
+        }
+
+        return NO_CHANGE;
+        
+        /*
         if (LastStep == null || (LastStep != null && LastStep.isFinished()))
         {
-            if (GroundedCriterion())
+            if (!InAirCriterion())
             {
                 // Stays grounded
             } else
@@ -150,47 +182,56 @@ public class FootTracker : MonoBehaviour
                 // Stays in the air
             }
         }
-        return NO_CHANGE;
+        return NO_CHANGE;*/
+
+
+
         /*
-        float v1 = VerticalAcceleration(DataCount() - 4);
-        float v2 = VerticalAcceleration(DataCount() - 3);
-        float v3 = VerticalAcceleration(DataCount() - 2);
-        float threshold = 0.05f;
-        if (!startStep)
+        if (DataCount() > 2)
         {
-            if (v3 > v2 && v2 > v1)
+            float h1 = data[DataCount() - 3].Position.y;
+            float h2 = data[DataCount() - 2].Position.y;
+            float h3 = data[DataCount() - 1].Position.y;
+            float threshold = 0.05f;
+            if (!startStep)
             {
-                if (v1 > threshold)
+                if (h3 > h2 && h2 > h1)
                 {
-                    Debug.Log("Start Peak");
-                    startStep = true;
-                    tt.Add(DataCount() - 4);
-                    Step step = new Step(foot, simTime, -1, false);
-                    steps.Add(step);
-                    return STEP_START;
+                    if (h1 > threshold)
+                    {
+                        Debug.Log("Start Peak");
+                        startStep = true;
+                        tt.Add(DataCount() - 3);
+                        Step step = new Step(foot, simTime, -1, false);
+                        steps.Add(step);
+                        return STEP_START;
+                    }
                 }
             }
-        } else
-        {
-            if (v3 > threshold)
+            else
             {
-                tt.Add(DataCount() - 2);
-            } else
-            {
-                if (v3 > v2)
+                if (h3 > threshold)
                 {
-                    Debug.Log("End Peak");
-                    startStep = false;
-                    Step step = LastStep;
-                    step.End = simTime;
-                    step.setFinished(true);
-                    return STEP_END;
+                    tt.Add(DataCount() - 1);
+                }
+                else
+                {
+                    if (Mathf.Abs(h1-h2) < 0.01f && Mathf.Abs(h2-h3) < 0.01f)
+                    {
+
+                        Debug.Log("End Peak");
+                        startStep = false;
+                        Step step = LastStep;
+                        step.End = simTime;
+                        step.setFinished(true);
+                        return STEP_END;
+                    }
                 }
             }
         }
+       
         return NO_CHANGE;*/
     }
-
 
     /* Updates trail renderer parameters if they are edited during the simulation */
     private void CheckTrailRendererModifications()
@@ -353,13 +394,18 @@ public class FootTracker : MonoBehaviour
 
             float v = VerticalSpeed(i + 1) - VerticalSpeed(i);
             float t = data[i + 1].Time - data[i - 1].Time;
-            return Mathf.Abs(v / t);
+            return v / t;
         }
     }
 
     private bool GroundedCriterion()
     {
-        return transform.position.y < 0.01f;
+        return transform.position.y < 0.02f;
+    }
+
+    private bool InAirCriterion()
+    {
+        return transform.position.y > 0.02f;
     }
 
     public float StepTime(int i)
