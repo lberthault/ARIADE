@@ -50,10 +50,12 @@ public class SimulationManager : MonoBehaviour
         A,
         B,
         C,
+        T
     }
     public static Path pathA = new Path("A16.15.25.99.43.42.32.22.21.20");
     public static Path pathB = new Path("B01.11.12.13.99.32.42.43.44.54");
     public static Path pathC = new Path("C55.45.35.99.13.12.11.21.31.30");
+    public static Path pathT = new Path("T51.41.42.52");
 
     [SerializeField]
     private PathName pathName;
@@ -186,7 +188,7 @@ public class SimulationManager : MonoBehaviour
 
         h = 0.3f;
         c = 0.5f;
-        rY = new List<float>() { -90f, +90f, +180f, -100f, +100f, +30f, +180f };
+        rY = new List<float>() { -90f, +90f, +180f, -90f, +90f, +30f, +180f };
         rX = 90f;
         ARROW_GROUND = new AdviceConfig(arrowPrefab, arrowWrongWayPrefab, h, c, rY, rX);
     }
@@ -199,6 +201,7 @@ public class SimulationManager : MonoBehaviour
             case PathName.A: trialPath = pathA; break;
             case PathName.B: trialPath = pathB; break;
             case PathName.C: trialPath = pathC; break;
+            case PathName.T: trialPath = pathT; break;
         }
         navConfig = new NavConfig(participantName, trialPath, advice);
         client = RTClient.GetInstance();
@@ -269,6 +272,11 @@ public class SimulationManager : MonoBehaviour
             UpdateDataText();
             yield return new WaitForSeconds(trackingPeriod);
         }
+    }
+
+    private void OnApplicationQuit()
+    {
+        WriteData();
     }
 
     // Updates debug mode GUI

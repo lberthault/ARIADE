@@ -5,4 +5,10 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes: []
-  m_configObjects: {}
+  m_configObjects:
+    Unity.XR.WindowsMR.Settings: {fileID: 11400000, guid: ad24b70851335a34d952d1cc61e323bf,
+      type: 2}
+    com.unity.xr.magicleap.magic_leap_settings: {fileID: 11400000, guid: f8ed271964dbe264a9cd1e4fa48721ab,
+      type: 2}
+    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: f96887b95f7973c41b203c211c5cc38a,
+      type: 2}
