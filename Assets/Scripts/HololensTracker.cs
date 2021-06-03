@@ -407,12 +407,12 @@ public class HololensTracker : MonoBehaviour
 
     private Vector3 AdviceBasePosition(Area area)
     {
-        return Converter.AreaToVector3(area, simManager.AdviceBaseHeight);
+        return Converter.AreaToVector3(area, simManager.AdviceConfig.AdviceBaseHeight);
     }
 
     private void AddWrongWayAdvice(Area area, Vector3 position, Vector3 rotation)
     {
-        GameObject wrongWayAdvicePrefab = simManager.GetWrongWayAdvicePrefab();
+        GameObject wrongWayAdvicePrefab = simManager.AdviceConfig.WrongWayAdvicePrefab;
         Advice advice = new Advice(area, wrongWayAdvicePrefab, position, rotation);
         simManager.AddAdvice(advice);
     }
@@ -429,7 +429,7 @@ public class HololensTracker : MonoBehaviour
 
     private void AddAdvice(Area area, Vector3 position, Vector3 rotation)
     {
-        GameObject advicePrefab = simManager.GetAdvicePrefab();
+        GameObject advicePrefab = simManager.AdviceConfig.AdvicePrefab;
         Advice advice = new Advice(area, advicePrefab, position, rotation);
         simManager.AddAdvice(advice);
     }
@@ -529,40 +529,41 @@ public class HololensTracker : MonoBehaviour
         Vector3 r;
         if (to != null)
         {
-            r = simManager.GetAdvicePrefab().transform.rotation.eulerAngles;
+            r = simManager.AdviceConfig.AdvicePrefab.transform.rotation.eulerAngles;
             d2 = GetDirection(at, to);
              action = GetAction(d1, d2);
         } else
         {
-            r = simManager.GetWrongWayAdvicePrefab().transform.rotation.eulerAngles;
+            r = simManager.AdviceConfig.AdvicePrefab.transform.rotation.eulerAngles;
             action = Action.GO_BACKWARD;
         }
         if (d1 == Direction.LEFT)
         {
-            r.y -= 90; 
+            r.y += simManager.AdviceConfig.AdviceRotationY[0]; 
         } else if (d1 == Direction.RIGHT)
         {
-            r.y += 90;
+            r.y += simManager.AdviceConfig.AdviceRotationY[1];
         }
         else if (d1 == Direction.DOWN)
         {
-            r.y += 180;
+            r.y += simManager.AdviceConfig.AdviceRotationY[2];
         }
         if (action == Action.TURN_LEFT)
         {
-            r.y -= 100;
+            r.y += simManager.AdviceConfig.AdviceRotationY[3];
         }
         else if (action == Action.TURN_RIGHT)
         {
-            r.y += 100;
+            r.y += simManager.AdviceConfig.AdviceRotationY[4];
         }
         else if (action == Action.GO_FORWARD)
         {
-            r.y += 30;
+            r.y += simManager.AdviceConfig.AdviceRotationY[5];
         } else
         {
-            r.y += 180;
+            r.y += simManager.AdviceConfig.AdviceRotationY[6];
         }
+        r.x += simManager.AdviceConfig.AdviceRotationX;
         return r;
     }
 
@@ -583,7 +584,7 @@ public class HololensTracker : MonoBehaviour
         float baseOffset = simManager.AdviceBaseOffset;
         if (at.IsBigArea())
         {
-            baseOffset *= 2;
+            baseOffset += simManager.AreaDetectorSize;
         }
         Vector3 offset = Vector3.zero;
         if (action == Action.GO_FORWARD)

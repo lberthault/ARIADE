@@ -7598,7 +7598,7 @@ PrefabInstance:
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
       propertyPath: debugMode
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
@@ -7615,6 +7615,21 @@ PrefabInstance:
       propertyPath: participantGUI
       value: 
       objectReference: {fileID: 1975648176}
+    - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
+        type: 3}
+      propertyPath: adviceConfigName
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
+        type: 3}
+      propertyPath: debugMovementSpeed
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
+        type: 3}
+      propertyPath: debugMouseSensitivity
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
       propertyPath: debugObjects.Array.data[0]

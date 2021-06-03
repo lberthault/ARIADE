@@ -23,26 +23,6 @@ public class SimulationManager : MonoBehaviour
     public const int TRIAL_NOT_STARTED = 0;
     public const int TRIAL_ONGOING = 1;
     public const int TRIAL_ENDED = 2;
-
-    // Path
-    public enum PathName
-    {
-        A,
-        B,
-        C,
-    }
-    public static Path pathA = new Path("A16.15.25.99.43.42.32.22.21.20");
-    public static Path pathB = new Path("B01.11.12.13.99.32.42.43.44.54");
-    public static Path pathC = new Path("C55.45.35.99.13.12.11.21.31.30");
-
-    [SerializeField]
-    private PathName pathName;
-    public Path trialPath;
-    public Path remainingPath;
-
-    // Data
-    private string dataFileName = "SimulationData";
-
     // Debug
     public const int DEBUG_MODE = 0;
     public const int XP_MODE = 1;
@@ -61,9 +41,73 @@ public class SimulationManager : MonoBehaviour
     [SerializeField]
     private float pathLineWidth = 0.05f;
     [SerializeField]
-    private float debugHololensMovementSpeed;
+    private float debugMovementSpeed;
     [SerializeField]
-    private float debugHololensMouseSensitivity;
+    private float debugMouseSensitivity;
+    // Path
+    public enum PathName
+    {
+        A,
+        B,
+        C,
+    }
+    public static Path pathA = new Path("A16.15.25.99.43.42.32.22.21.20");
+    public static Path pathB = new Path("B01.11.12.13.99.32.42.43.44.54");
+    public static Path pathC = new Path("C55.45.35.99.13.12.11.21.31.30");
+
+    [SerializeField]
+    private PathName pathName;
+    public Path trialPath;
+    public Path remainingPath;
+    // Advice
+    public enum AdviceName
+    {
+        ARROW,
+        LIGHT,
+        PEANUT
+    };
+
+    public enum AdviceConfigName
+    {
+        ARROW_AIR,
+        ARROW_GROUND
+    }
+
+    [SerializeField]
+    private AdviceName advice;
+
+    [SerializeField]
+    private AdviceConfigName adviceConfigName;
+    public AdviceConfig AdviceConfig
+    {
+        get
+        {
+            switch (adviceConfigName)
+            {
+                case (AdviceConfigName.ARROW_AIR):
+                    return ARROW_AIR;
+                case (AdviceConfigName.ARROW_GROUND):
+                    return ARROW_GROUND;
+                default: return ARROW_AIR;
+            };
+        }
+    }
+
+    public AdviceConfig ARROW_AIR, ARROW_GROUND;
+
+    [SerializeField]
+    public GameObject arrowPrefab, lightPrefab, peanutPrefab;
+    [SerializeField]
+    public GameObject arrowWrongWayPrefab, lightWrongWayPrefab, peanutWrongWayPrefab;
+
+    List<Advice> visibleAdvice;
+
+    public float AdviceBaseOffset
+    {
+        get { return AdviceConfig.AdviceBaseOffsetCoef * AreaDetectorSize; }
+    }
+    // Data
+    private string dataFileName = "SimulationData";
 
     // GUI
     [SerializeField]
@@ -89,49 +133,14 @@ public class SimulationManager : MonoBehaviour
     private GameObject hololens;
     private HololensTracker hololensTracker;
 
-
-    // Advice
-    public enum AdviceName
-    {
-        ARROW,
-        LIGHT,
-        PEANUT
-    };
-
-    [SerializeField]
-    private AdviceName advice;
-
-    private GameObject advicePrefab;
-    private GameObject wrongWayAdvicePrefab;
-
-    [SerializeField]
-    private GameObject arrowPrefab, lightPrefab, peanutPrefab;
-    [SerializeField]
-    private GameObject arrowWrongWayPrefab, lightWrongWayPrefab, peanutWrongWayPrefab;
-
-    List<Advice> visibleAdvice;
-
-    private float adviceBaseHeight;
-
-    public float AdviceBaseHeight
-    {
-        get { return adviceBaseHeight; }
-    }
-
-    private float adviceBaseOffset;
-
-    public float AdviceBaseOffset
-    {
-        get { return adviceBaseOffset; }
-    }
-
     // Area detector
     [SerializeField]
     private GameObject areaDetectorPrefab;
-    private float areaDetectorSize;
+    public float AreaDetectorSize { get; set; }
 
     void Start()
     {
+        InitiateAdviceConfig();
         InitiateVariables();
         InitiateComponents();
         InitiateGUI();
@@ -146,13 +155,40 @@ public class SimulationManager : MonoBehaviour
         {
             DrawTrialPath();
             HololensController hc = hololens.AddComponent<HololensController>();
-            hc.movementSpeed = debugHololensMovementSpeed;
-            hc.mouseSensitivity = debugHololensMouseSensitivity;
+            hc.movementSpeed = debugMovementSpeed;
+            hc.mouseSensitivity = debugMouseSensitivity;
         } else
         {
             InitQTMServer();
             StartCoroutine(nameof(CheckQTMConnection));
         }
+    }
+
+    private void InitiateAdviceConfig()
+    {
+        /* 
+         * h : base height
+         * c : base offset coef
+         * rY : Y rotation
+         * 0 = LEFT (should not change)
+         * 1 = RIGHT (should not change)
+         * 2 = DOWN (should not change)
+         * 3 = TURN_LEFT
+         * 4 = TURN_RIGHT
+         * 5 = GO_FORWARD
+         * 6 = GO_BACKWARD
+         */
+        float h = 0.8f;
+        float c = 1.0f;
+        List<float> rY = new List<float>() { -90f, +90f, +180f, -100f, +100f, +30f, +180f };
+        float rX = 0f;
+        ARROW_AIR = new AdviceConfig(arrowPrefab, arrowWrongWayPrefab, h, c, rY, rX);
+
+        h = 0.3f;
+        c = 0.5f;
+        rY = new List<float>() { -90f, +90f, +180f, -100f, +100f, +30f, +180f };
+        rX = 90f;
+        ARROW_GROUND = new AdviceConfig(arrowPrefab, arrowWrongWayPrefab, h, c, rY, rX);
     }
 
     private void InitiateVariables()
@@ -169,15 +205,8 @@ public class SimulationManager : MonoBehaviour
         remainingPath = trialPath;
         visibleAdvice = new List<Advice>();
 
-        areaDetectorSize = areaDetectorPrefab.GetComponent<BoxCollider>().size.x;
-        switch (advice)
-        {
-            case AdviceName.ARROW:
-                advicePrefab = arrowPrefab;
-                wrongWayAdvicePrefab = arrowWrongWayPrefab;
-                adviceBaseHeight = 0.8f;
-                adviceBaseOffset = 1.0f * areaDetectorSize; break;
-        }
+        AreaDetectorSize = areaDetectorPrefab.GetComponent<BoxCollider>().size.x;
+        
 
     }
 
@@ -428,13 +457,4 @@ public class SimulationManager : MonoBehaviour
         return Mathf.Abs(a2.column - a1.column) + Mathf.Abs(a2.line - a1.line);
     }
 
-    public GameObject GetAdvicePrefab()
-    {
-        return advicePrefab;
-    }
-
-    public GameObject GetWrongWayAdvicePrefab()
-    {
-        return wrongWayAdvicePrefab;
-    }
 }

@@ -170,6 +170,10 @@ public class FeetTracker : MonoBehaviour
 
     public float MeanStepFrequency()
     {
+        if (steps.Count == 0)
+        {
+            return -1f;
+        }
         return StepCount / (LastStep.End - steps[0].Start);
     }
 
