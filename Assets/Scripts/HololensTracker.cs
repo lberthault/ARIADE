@@ -310,12 +310,18 @@ public class HololensTracker : MonoBehaviour
     {
         if (currentArea == null)
         {
-            AreaDetector areaDetector = area.GetAreaDetector();
-            areaDetector.DisplayLandmarks(true);
+          
             Area lastArea = walkedPath.GetLast();
             if (lastArea != null && area.Equals(lastArea))
             {
                 return;
+            }
+
+            if (lastArea != null)
+            {
+                lastArea.GetAreaDetector().RemoveLandmarks(true);
+                AreaDetector areaDetector = area.GetAreaDetector();
+                areaDetector.DisplayLandmarks(GetDirection(lastArea, area), true);
             }
             currentArea = new Area(area, simTime);
             bool onTheRightPath = false;
@@ -657,7 +663,8 @@ public class HololensTracker : MonoBehaviour
         }
         r.x += simManager.AdviceConfig.AdviceRotationX;
         if (!from.InBigArea() && at.InBigArea())
-        {
+        {// ERREUR POUR BIG AREA
+
             if (Mathf.Abs(at.line - to.line) + Mathf.Abs(at.column - to.column) == 2)
             {
                 if (at.Equals(new Area(3, 3)) || at.Equals(new Area(2, 4)))

@@ -203,3 +203,5 @@ t = 8,300405 : Left Foot starts a step
 t = 8,321648 : Left Foot ends a step (total=11)
 t = 8,939843 : Right Foot starts a step
 t = 8,965633 : Right Foot ends a step (total=12)
+t = 3,603362 : Right Foot starts a step
+t = 22,98573 : Right Foot starts a step

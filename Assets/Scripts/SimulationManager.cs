@@ -5,6 +5,7 @@ using TMPro;
 using System;
 using QTMRealTimeSDK;
 using QualisysRealTime.Unity;
+using UnityEditor;
 
 public class SimulationManager : MonoBehaviour
 {
@@ -30,7 +31,7 @@ public class SimulationManager : MonoBehaviour
     [SerializeField]
     private bool debugMode;
     [SerializeField]
-    private bool drawLines, setOcclusion, manualController;
+    private bool drawLines, setOcclusion, manualController, drawGUI;
     public int Mode
     {
         get { return debugMode ? DEBUG_MODE : XP_MODE; }
@@ -171,7 +172,7 @@ public class SimulationManager : MonoBehaviour
         {
             if (!trialPath.Contains(area))
             {
-                DestroyAreaDetector(area);
+                DisableAreaDetection(area);
             }
         }
         
@@ -182,7 +183,7 @@ public class SimulationManager : MonoBehaviour
             o.SetActive(debugMode);
         }
 
-        if (!debugMode || setOcclusion)
+        if (setOcclusion)
         {
             foreach (GameObject o in invisibleObjects)
             {
@@ -194,29 +195,55 @@ public class SimulationManager : MonoBehaviour
             }
         }
 
-        if (debugMode || drawLines)
+        if (drawLines)
         {
             DrawTrialPath();
         }
 
-        if (debugMode || manualController)
+        canvasGUI.SetActive(drawGUI);
+        if (manualController)
         {
             HololensController hc = hololens.AddComponent<HololensController>();
             hc.movementSpeed = debugMovementSpeed;
             hc.mouseSensitivity = debugMouseSensitivity;
+        } else {
+            //InitQTMServer();
+            //StartCoroutine(nameof(CheckQTMConnection));
         }
-        if (!debugMode && !manualController) {
-            InitQTMServer();
-            StartCoroutine(nameof(CheckQTMConnection));
+
+        string prefix = "Assets/Landmarks/" + pathName + "/";
+        string suffix = ".png";
+        bool bigAreaIsDone = false;
+        int currentTexture = 1;
+        for (int i = 1; i < trialPath.Count() - 2; i++)
+        {
+            Area a = trialPath.Get(i);
+            if (!a.InBigArea())
+            {
+                AreaDetector ad = a.GetAreaDetector();
+                Texture t = (Texture)AssetDatabase.LoadAssetAtPath(prefix + "R" + currentTexture + suffix, typeof(Texture));
+                ad.Texture = t;
+                currentTexture++;
+            } else if (!bigAreaIsDone)
+            {
+                foreach (Area bigAreaArea in Area.BigAreaAreas())
+                {
+                    AreaDetector ad = bigAreaArea.GetAreaDetector();
+                    Texture t = (Texture)AssetDatabase.LoadAssetAtPath(prefix + "R" + currentTexture + suffix, typeof(Texture));
+                    ad.Texture = t;
+                }
+                bigAreaIsDone = true;
+                currentTexture++;
+            }
         }
     }
 
-    private void DestroyAreaDetector(Area area)
+    private void DisableAreaDetection(Area area)
     {
         AreaDetector areaDetector = area.GetAreaDetector();
         if (areaDetector != null)
         {
-            areaDetector.gameObject.SetActive(false);
+            areaDetector.gameObject.GetComponent<Collider>().enabled = false;
         }
     }
 
@@ -781,7 +808,7 @@ public class SimulationManager : MonoBehaviour
         lr.endColor = Color.red;
         lr.startWidth = pathLineWidth;
         lr.endWidth = pathLineWidth;
-        lr.numCornerVertices = 1;
+        lr.numCornerVertices = 0;
         lr.positionCount = trialPath.Count();
         for (int i = 0; i < trialPath.Count(); i++)
         {
