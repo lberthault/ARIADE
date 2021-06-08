@@ -23,17 +23,26 @@ public class SimulationManager : MonoBehaviour
     public const int TRIAL_NOT_STARTED = 0;
     public const int TRIAL_ONGOING = 1;
     public const int TRIAL_ENDED = 2;
+
     // Debug
     public const int DEBUG_MODE = 0;
     public const int XP_MODE = 1;
     [SerializeField]
     private bool debugMode;
+    [SerializeField]
+    private bool drawLines, setOcclusion, manualController;
     public int Mode
     {
         get { return debugMode ? DEBUG_MODE : XP_MODE; }
     }
     [SerializeField]
     private List<GameObject> debugObjects;
+    [SerializeField]
+    private List<GameObject> invisibleObjects;
+    [SerializeField]
+    private List<GameObject> obscurableObjects;
+    [SerializeField]
+    private Material invisibleMaterial;
     [SerializeField]
     private Material pathLineMaterial;
     [SerializeField]
@@ -44,6 +53,7 @@ public class SimulationManager : MonoBehaviour
     private float debugMovementSpeed;
     [SerializeField]
     private float debugMouseSensitivity;
+
     // Path
     public enum PathName
     {
@@ -52,9 +62,9 @@ public class SimulationManager : MonoBehaviour
         C,
         T
     }
-    public static Path pathA = new Path("A16.15.25.99.43.42.32.22.21.20");
-    public static Path pathB = new Path("B01.11.12.13.99.32.42.43.44.54");
-    public static Path pathC = new Path("C55.45.35.99.13.12.11.21.31.30");
+    public static Path pathA = new Path("A16.15.25.24.33.43.42.32.22.21.20");
+    public static Path pathB = new Path("B01.11.12.13.23.33.32.42.43.44.54");
+    public static Path pathC = new Path("C55.45.35.34.23.13.12.11.21.31.30");
     public static Path pathT = new Path("T51.41.42.52");
 
     [SerializeField]
@@ -72,7 +82,8 @@ public class SimulationManager : MonoBehaviour
     public enum AdviceConfigName
     {
         ARROW_AIR,
-        ARROW_GROUND
+        ARROW_GROUND,
+        LIGHT
     }
 
     [SerializeField]
@@ -90,17 +101,25 @@ public class SimulationManager : MonoBehaviour
                     return ARROW_AIR;
                 case (AdviceConfigName.ARROW_GROUND):
                     return ARROW_GROUND;
+                case (AdviceConfigName.LIGHT):
+                    return LIGHT;
                 default: return ARROW_AIR;
             };
         }
     }
 
-    public AdviceConfig ARROW_AIR, ARROW_GROUND;
+    public AdviceConfig ARROW_AIR, ARROW_GROUND, LIGHT;
 
     [SerializeField]
     public GameObject arrowPrefab, lightPrefab, peanutPrefab;
     [SerializeField]
     public GameObject arrowWrongWayPrefab, lightWrongWayPrefab, peanutWrongWayPrefab;
+
+    public Material lightPathMaterial;
+    public Material lightPathWrongWayMaterial;
+
+    private LineRenderer lightPathLineRenderer;
+    private LineRenderer lightPathWrongWayLineRenderer;
 
     List<Advice> visibleAdvice;
 
@@ -108,6 +127,7 @@ public class SimulationManager : MonoBehaviour
     {
         get { return AdviceConfig.AdviceBaseOffsetCoef * AreaDetectorSize; }
     }
+
     // Data
     private string dataFileName = "SimulationData";
 
@@ -146,6 +166,15 @@ public class SimulationManager : MonoBehaviour
         InitiateVariables();
         InitiateComponents();
         InitiateGUI();
+        List<Area> toDestroy = new List<Area>();
+        foreach (Area area in Area.BigAreaAreas())
+        {
+            if (!trialPath.Contains(area))
+            {
+                DestroyAreaDetector(area);
+            }
+        }
+        
         SetTrialState(TRIAL_NOT_STARTED);
 
         foreach (GameObject o in debugObjects)
@@ -153,16 +182,41 @@ public class SimulationManager : MonoBehaviour
             o.SetActive(debugMode);
         }
 
-        if (debugMode)
+        if (!debugMode || setOcclusion)
+        {
+            foreach (GameObject o in invisibleObjects)
+            {
+                SetInvisible(o);
+            }
+            foreach (GameObject o in obscurableObjects)
+            {
+                SetObscurable(o);
+            }
+        }
+
+        if (debugMode || drawLines)
         {
             DrawTrialPath();
+        }
+
+        if (debugMode || manualController)
+        {
             HololensController hc = hololens.AddComponent<HololensController>();
             hc.movementSpeed = debugMovementSpeed;
             hc.mouseSensitivity = debugMouseSensitivity;
-        } else
-        {
+        }
+        if (!debugMode && !manualController) {
             InitQTMServer();
             StartCoroutine(nameof(CheckQTMConnection));
+        }
+    }
+
+    private void DestroyAreaDetector(Area area)
+    {
+        AreaDetector areaDetector = area.GetAreaDetector();
+        if (areaDetector != null)
+        {
+            areaDetector.gameObject.SetActive(false);
         }
     }
 
@@ -187,10 +241,16 @@ public class SimulationManager : MonoBehaviour
         ARROW_AIR = new AdviceConfig(arrowPrefab, arrowWrongWayPrefab, h, c, rY, rX);
 
         h = 0.3f;
-        c = 0.5f;
-        rY = new List<float>() { -90f, +90f, +180f, -90f, +90f, +30f, +180f };
+        c = 0.3f;
+        rY = new List<float>() { -90f, +90f, +180f, -90f, +90f, +0f, +180f };
         rX = 90f;
         ARROW_GROUND = new AdviceConfig(arrowPrefab, arrowWrongWayPrefab, h, c, rY, rX);
+
+        h = 0.3f;
+        c = 0.8f;
+        rY = new List<float>() { -90f, +90f, +180f, -90f, +90f, +30f, +180f };
+        rX = 0f;
+        LIGHT = new AdviceConfig(null, lightWrongWayPrefab, h, c, rY, rX);
     }
 
     private void InitiateVariables()
@@ -420,19 +480,301 @@ public class SimulationManager : MonoBehaviour
         visibleAdvice.Add(advice);
     }
 
+    int vertexCount = 50;
+    List<int> flags = new List<int>();
+    private Vector3 start;
+
+    public float lightPathDelayInSeconds;
+
+    IEnumerator DrawPoints0(object[] parms)
+    {
+        List<Vector3> positionList = new List<Vector3>();
+        Vector3 at = (Vector3)parms[0];
+        Vector3 to = (Vector3)parms[1];
+        Vector3 toto = (Vector3)parms[2];
+        lightPathLineRenderer.positionCount = 0;
+        for (float ratio = 0; ratio <= 1; ratio += 1f / vertexCount)
+        {
+            Vector3 tangent1 = Vector3.Lerp(start, at, ratio);
+            Vector3 tangent2 = Vector3.Lerp(at, (at + to) / 2f, ratio);
+            Vector3 curve = Vector3.Lerp(tangent1, tangent2, ratio);
+            positionList.Add(curve);
+            lightPathLineRenderer.positionCount++;
+            lightPathLineRenderer.SetPosition(lightPathLineRenderer.positionCount - 1, curve);
+            yield return new WaitForSeconds(lightPathDelayInSeconds);
+        }
+        for (float ratio = 0; ratio <= 1; ratio += 1f / vertexCount)
+        {
+            Vector3 tangent1 = Vector3.Lerp((at + to) / 2f, to, ratio);
+            Vector3 tangent2 = Vector3.Lerp(to, (to + toto) / 2f, ratio);
+            Vector3 curve = Vector3.Lerp(tangent1, tangent2, ratio);
+            positionList.Add(curve);
+            lightPathLineRenderer.positionCount++;
+            lightPathLineRenderer.SetPosition(lightPathLineRenderer.positionCount - 1, curve);
+            yield return new WaitForSeconds(lightPathDelayInSeconds);
+        }
+
+        start = (to + toto) / 2f;
+        flags.Add(positionList.Count);
+        yield return null;
+    }
+
+    IEnumerator DrawPoints1(object[] parms)
+    {
+        List<Vector3> positionList = new List<Vector3>();
+        Vector3 at = (Vector3)parms[0];
+        Vector3 to = (Vector3)parms[1];
+        Vector3 toto = (Vector3)parms[2];
+        for (float ratio = 0; ratio <= 1; ratio += 1f / vertexCount)
+        {
+            Vector3 tangent1 = Vector3.Lerp((at + to) / 2f, to, ratio);
+            Vector3 tangent2 = Vector3.Lerp(to, (to + toto) / 2f, ratio);
+            Vector3 curve = Vector3.Lerp(tangent1, tangent2, ratio);
+            positionList.Add(curve);
+            lightPathLineRenderer.positionCount++;
+            lightPathLineRenderer.SetPosition(lightPathLineRenderer.positionCount - 1, curve);
+            yield return new WaitForSeconds(lightPathDelayInSeconds);
+        }
+
+        start = (to + toto) / 2f;
+        flags.Add(positionList.Count);
+        yield return null;
+    }
+    public void DrawLightPath(Vector3 from, Vector3 at, Vector3 to, Vector3 toto)
+    {
+        if (lightPathLineRenderer == null)
+        {
+            GameObject pathLine = new GameObject();
+            pathLine.name = "LightPath";
+            pathLine.transform.position = from;
+            lightPathLineRenderer = pathLine.AddComponent<LineRenderer>();
+            lightPathLineRenderer.material = lightPathMaterial;
+            SetObscurable(lightPathLineRenderer.gameObject);
+            lightPathLineRenderer.startColor = Color.white;
+            lightPathLineRenderer.endColor = Color.white;
+            lightPathLineRenderer.startWidth = 0.08f;
+            lightPathLineRenderer.endWidth = 0.08f;
+            lightPathLineRenderer.numCornerVertices = 0;
+            start = from;
+            object[] parms = new object[3] { at, to, toto };
+            StartCoroutine(nameof(DrawPoints0), parms);
+            return;
+        } else
+        {
+
+            List<Vector3> positionList = new List<Vector3>();
+            if (lightPathLineRenderer.positionCount == 0)
+            {
+                start = from;
+                object[] parms = new object[3] { at, to, toto };
+                StartCoroutine(nameof(DrawPoints0), parms);
+
+            } else
+            {
+                object[] parms = new object[3] { at, to, toto };
+                StartCoroutine(nameof(DrawPoints1), parms);
+            }
+
+           
+        }
+
+    }
+
+    private int segments = 100;
+    private float xradius = 0.5f;
+    private float zradius = 0.5f;
+
+    public static void SetObscurable(GameObject o)
+    {
+        Component[] renderers = o.GetComponentsInChildren(typeof(Renderer));
+        foreach (Component renderer in renderers)
+        {
+            ((Renderer)renderer).material.renderQueue = 3002;
+        }
+    }
+
+    private void SetInvisible(GameObject o)
+    {
+        Component[] renderers = o.GetComponentsInChildren(typeof(Renderer));
+        foreach (Component renderer in renderers)
+        {
+            ((Renderer)renderer).material = invisibleMaterial;
+        }
+    }
+
+    public void DrawWrongWayLightPath(Area area, Vector3 offset, float rotationY)
+    {
+        if (lightPathWrongWayLineRenderer == null)
+        {
+            GameObject pathLine = new GameObject();
+            pathLine.name = "WrongWayLightPath";
+            lightPathWrongWayLineRenderer = pathLine.AddComponent<LineRenderer>();
+            lightPathWrongWayLineRenderer.material = lightPathWrongWayMaterial;
+            lightPathWrongWayLineRenderer.startColor = Color.red;
+            lightPathWrongWayLineRenderer.endColor = Color.red;
+            lightPathWrongWayLineRenderer.startWidth = 0.08f;
+            lightPathWrongWayLineRenderer.endWidth = 0.08f;
+            lightPathWrongWayLineRenderer.useWorldSpace = false;
+        }
+        lightPathWrongWayLineRenderer.gameObject.transform.eulerAngles = Vector3.zero;
+        lightPathWrongWayLineRenderer.positionCount = segments + 1;
+        lightPathWrongWayLineRenderer.gameObject.transform.position = Converter.AreaToVector3(area, 0.2f) + offset;
+        CreatePoints(area, offset, rotationY);
+    }
+   
+    void CreatePoints(Area area, Vector3 offset, float rotationY)
+    {
+        /*
+        float x;
+        float y = 0f;
+        float z;
+
+        float angle = 0f;
+
+        for (int i = 0; i < (segments + 1); i++)
+        {
+            x = Mathf.Sin(Mathf.Deg2Rad * angle) * xradius + xradius;
+            z = Mathf.Cos(Mathf.Deg2Rad * angle) * zradius;
+
+            lightPathWrongWayLineRenderer.SetPosition(i, new Vector3(x, y, z));
+
+            angle += (380f / segments);
+        }
+        lightPathWrongWayLineRenderer.gameObject.transform.Rotate(new Vector3(0, rotationY, 0));
+
+        */
+
+        float crossSize = 0.5f;
+        lightPathWrongWayLineRenderer.positionCount = 5;
+        lightPathWrongWayLineRenderer.SetPosition(0, new Vector3(-1, 0, -1) * crossSize);
+        lightPathWrongWayLineRenderer.SetPosition(1, new Vector3(+1, 0, +1) * crossSize);
+        lightPathWrongWayLineRenderer.SetPosition(2, new Vector3(0, 0, 0) * crossSize);
+        lightPathWrongWayLineRenderer.SetPosition(3, new Vector3(1, 0, -1) * crossSize);
+        lightPathWrongWayLineRenderer.SetPosition(4, new Vector3(-1, 0, 1) * crossSize);
+        lightPathLineRenderer.gameObject.transform.Rotate(new Vector3(0, rotationY, 0));
+
+        /*
+        // Z(X)
+        float a = -3f;
+        float b = 0f;
+        float c = 0f;
+        float x, z;
+        float z0 = 0.5f;
+        z = z0;
+        for (int i = 0; i < (segments + 1); i++)
+        {
+            x = a * z * z - b * z + c;
+
+            lightPathLineRenderer.SetPosition(i, new Vector3(x, 0f, z));
+            z -= 2f * z0 / segments;
+        }
+        lightPathLineRenderer.gameObject.transform.Rotate(new Vector3(0, rotationY, 0));*/
+    }
+
     public void RemoveAdviceAtArea(Area area)
     {
-        foreach (Advice advice in visibleAdvice)
-        {
-            if (advice.Area.Equals(area))
+        //if (advice == AdviceName.ARROW)
+        //{
+            foreach (Advice advice in visibleAdvice)
             {
-                advice.Remove();
+                if (advice.Area.Equals(area))
+                {
+                    advice.Remove();
+                }
             }
-        }
+            /*
+        } else if (advice == AdviceName.LIGHT)
+        {
+            if (lightPathLineRenderer != null)
+            {
+                Debug.Log("d");
+                Vector3[] pos = new Vector3[lightPathLineRenderer.positionCount];
+                Vector3[] newPos = new Vector3[lightPathLineRenderer.positionCount - 1];
+                int offset = 0;
+                lightPathLineRenderer.GetPositions(pos);
+                for (int i = 0; i < pos.Length; i++)
+                {
+                    if (Vector3.Distance(Converter.AreaToVector3(area, 0.2f), pos[i]) < 0.01f)
+                    {
+                        Debug.Log("a");
+                        newPos[i] = pos[i + offset];
+                    }
+                    else
+                    {
+                        Debug.Log("b");
+                        offset++;
+                    }
+                }
+                lightPathLineRenderer.positionCount--;
+                lightPathLineRenderer.SetPositions(newPos);
+            } else
+            {
+                Debug.Log("e");
+            }
+           
+        }*/
+        
     }
 
     public void RemoveAllAdvice()
     {
+        if (advice == AdviceName.ARROW)
+        {
+            foreach (Advice advice in visibleAdvice)
+            {
+                advice.Remove();
+            }
+        }
+        else if (advice == AdviceName.LIGHT)
+        {
+            if (lightPathLineRenderer != null)
+            {
+                Vector3[] newPos = new Vector3[0];
+                lightPathLineRenderer.positionCount = 0;
+                lightPathLineRenderer.SetPositions(newPos);
+            }
+            if (lightPathWrongWayLineRenderer != null)
+            {
+                Vector3[] newPos = new Vector3[0];
+                lightPathWrongWayLineRenderer.positionCount = 0;
+                lightPathWrongWayLineRenderer.SetPositions(newPos);
+            }
+            foreach (Advice advice in visibleAdvice)
+            {
+                advice.Remove();
+            }
+            flags.Clear();
+        }
+    }
+
+    public void RemoveWrongWayLightAdvice()
+    {
+        foreach (Advice advice in visibleAdvice)
+        {
+            advice.Remove();
+        }
+    }
+
+    public void RemoveLightAdvice()
+    {
+        if (lightPathLineRenderer != null)
+        {
+            int n = flags[0];
+            Vector3[] newPos = new Vector3[lightPathLineRenderer.positionCount - n];
+            for (int i = n; i < lightPathLineRenderer.positionCount; i++)
+            {
+                newPos[i - n] = lightPathLineRenderer.GetPosition(i);
+            }
+            lightPathLineRenderer.positionCount -= n;
+            lightPathLineRenderer.SetPositions(newPos);
+            flags.RemoveAt(0);
+        }
+        if (lightPathWrongWayLineRenderer != null)
+        {
+            Vector3[] newPos = new Vector3[0];
+            lightPathWrongWayLineRenderer.positionCount = 0;
+            lightPathWrongWayLineRenderer.SetPositions(newPos);
+        }
         foreach (Advice advice in visibleAdvice)
         {
             advice.Remove();
@@ -463,6 +805,16 @@ public class SimulationManager : MonoBehaviour
     public static int DistanceBetweenAreas(Area a1, Area a2)
     {
         return Mathf.Abs(a2.column - a1.column) + Mathf.Abs(a2.line - a1.line);
+    }
+
+    public AdviceName GetAdviceName()
+    {
+        return advice;
+    }
+
+    public LineRenderer GetLightPathLineRenderer()
+    {
+        return lightPathLineRenderer;
     }
 
 }

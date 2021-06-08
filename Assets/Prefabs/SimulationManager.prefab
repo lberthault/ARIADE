@@ -44,8 +44,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   participantName: "Martine Dupr\xE9"
-  pathName: 1
   debugMode: 1
+  drawLines: 0
   debugObjects:
   - {fileID: 0}
   - {fileID: 0}
@@ -54,11 +54,30 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  invisibleObjects:
+  - {fileID: 0}
+  obscurableObjects: []
+  invisibleMaterial: {fileID: 2100000, guid: d22b7b5f2ff546541a8652b4de8a6450, type: 2}
   pathLineMaterial: {fileID: 2100000, guid: 3c540979fa7b4f143bde79c6fb9fe6e7, type: 2}
   pathLineHeight: 0.7
   pathLineWidth: 0.05
-  debugHololensMovementSpeed: 1
-  debugHololensMouseSensitivity: 2
+  debugMovementSpeed: 1
+  debugMouseSensitivity: 2
+  pathName: 0
+  advice: 1
+  adviceConfigName: 2
+  arrowPrefab: {fileID: 4599282483956589419, guid: 8fc8e48d227dbf74699060a57b77a8b1,
+    type: 3}
+  lightPrefab: {fileID: 0}
+  peanutPrefab: {fileID: 0}
+  arrowWrongWayPrefab: {fileID: 1091452607094662007, guid: a68dd5fc7c1b59542b00a1a225874281,
+    type: 3}
+  lightWrongWayPrefab: {fileID: 655261816301447210, guid: a01befa1697c22a4db77915dd7f675a2,
+    type: 3}
+  peanutWrongWayPrefab: {fileID: 0}
+  lightPathMaterial: {fileID: 2100000, guid: 2acec0dfd39c5314c857a737f9eef267, type: 2}
+  lightPathWrongWayMaterial: {fileID: 2100000, guid: f4b10ed9f60954846bab752498431138,
+    type: 2}
   canvasGUI: {fileID: 0}
   participantGUI: {fileID: 0}
   pathGUI: {fileID: 0}
@@ -72,14 +91,6 @@ MonoBehaviour:
   trackingPeriod: 0.01
   feet: {fileID: 0}
   hololens: {fileID: 0}
-  advice: 0
-  arrowPrefab: {fileID: 4599282483956589419, guid: 8fc8e48d227dbf74699060a57b77a8b1,
-    type: 3}
-  lightPrefab: {fileID: 0}
-  peanutPrefab: {fileID: 0}
-  arrowWrongWayPrefab: {fileID: 1091452607094662007, guid: a68dd5fc7c1b59542b00a1a225874281,
-    type: 3}
-  lightWrongWayPrefab: {fileID: 0}
-  peanutWrongWayPrefab: {fileID: 0}
   areaDetectorPrefab: {fileID: 5307420673058566518, guid: 8e1b136061d89c844a97cacb0983b797,
     type: 3}
+  lightPathDelayInSeconds: 0.007

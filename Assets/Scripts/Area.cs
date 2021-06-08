@@ -1,4 +1,7 @@
 ﻿/* An area represents the square-shaped space between four landmarks */
+using System.Collections.Generic;
+using UnityEngine;
+
 public class Area
 {
    
@@ -41,10 +44,6 @@ public class Area
 
     override public string ToString()
     {
-        if (line == column && line == 9)
-        {
-            return "Big Area";
-        }
         return "(" + line + "," + column + ")";
     }
 
@@ -65,12 +64,21 @@ public class Area
         get { return outTime - inTime; }
     }
 
-    /* The big area has the (9,9) coordinates */
-    public bool IsBigArea()
+    public bool InBigArea()
     {
-        return line == 9 && column == 9;
+        return (line == 2 || line == 3) && (column == 3 || column == 4);
     }
-    
+
+    public static List<Area> BigAreaAreas()
+    {
+        List<Area> res = new List<Area>();
+        res.Add(new Area(2, 3));
+        res.Add(new Area(3, 3));
+        res.Add(new Area(2, 4));
+        res.Add(new Area(3, 4));
+        return res;
+    }
+
     /* The external border is the set of areas outside the trial area */
     public bool IsOnExternalBorder()
     {
@@ -92,7 +100,7 @@ public class Area
     /* The number of decisions the participant can take at the intersection */
     public int NumberOfDecisions()
     {
-        bool inBigArea = IsBigArea();
+        bool inBigArea = InBigArea();
         bool onExternalBorder = IsOnExternalBorder();
         bool onInternalBorder = IsOnInternalBorder();
         bool inCorner = IsInCorner();
@@ -121,4 +129,19 @@ public class Area
             return 8;
         }
     }
+
+    public AreaDetector GetAreaDetector()
+    {
+        GameObject parent = GameObject.Find("AreaDetectors");
+        foreach (Transform transform in parent.transform)
+        {
+            AreaDetector areaDetector = transform.gameObject.GetComponent<AreaDetector>();
+            if (areaDetector.Area.Equals(this))
+            {
+                return areaDetector;
+            }
+        }
+        return null;
+    }
+
 }

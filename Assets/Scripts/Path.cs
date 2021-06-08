@@ -147,4 +147,17 @@ public class Path
     {
         areas.Insert(0, area);
     }
+
+    public List<Area> AreasInBigArea()
+    {
+        List<Area> res = new List<Area>();
+        foreach (Area area in areas)
+        {
+            if (area.InBigArea())
+            {
+                res.Add(area);
+            }
+        }
+        return res;
+    }
 }

@@ -66,7 +66,7 @@ PrefabInstance:
     - target: {fileID: 2473224338579601421, guid: bf5399291d11c334b94272754771841d,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2473224338579601421, guid: bf5399291d11c334b94272754771841d,
         type: 3}
@@ -113,6 +113,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3360964059248070277, guid: bf5399291d11c334b94272754771841d,
+        type: 3}
+      propertyPath: PositionOffset.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3884076103983537963, guid: bf5399291d11c334b94272754771841d,
         type: 3}
       propertyPath: m_Name
@@ -151,7 +156,7 @@ PrefabInstance:
     - target: {fileID: 2473224338579601421, guid: bf5399291d11c334b94272754771841d,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2473224338579601421, guid: bf5399291d11c334b94272754771841d,
         type: 3}
@@ -202,6 +207,11 @@ PrefabInstance:
         type: 3}
       propertyPath: ObjectName
       value: RFOOT
+      objectReference: {fileID: 0}
+    - target: {fileID: 3360964059248070277, guid: bf5399291d11c334b94272754771841d,
+        type: 3}
+      propertyPath: PositionOffset.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3884076103983537963, guid: bf5399291d11c334b94272754771841d,
         type: 3}
