@@ -453,26 +453,13 @@ public class SimulationManager : MonoBehaviour
         SetTrialState(TRIAL_ENDED);
         StopCoroutine(nameof(Track));
         RemoveAllAdvice();
-        WriteData();
         isTracking = false;
     }
 
     // The data written in the synthetical file at the end of the trial
     public void WriteData()
     {
-        DataManager.WriteDataInFile(dataFileName, navConfig, "Simulation time : " + Converter.Round(SimTime, 2) + "s");
-        DataManager.WriteDataInFile(dataFileName, navConfig, "Distance travelled : " + Converter.Round(hololensTracker.DistanceTravelled(), 2) + " m");
-        DataManager.WriteDataInFile(dataFileName, navConfig, "Mean speed : " + Converter.Round(hololensTracker.MeanSpeed(), 2) + " m/s");
-        DataManager.WriteDataInFile(dataFileName, navConfig, "Number of steps : " + feetTracker.StepCount);
-        DataManager.WriteDataInFile(dataFileName, navConfig, "Mean step frequency : " + Converter.Round(feetTracker.MeanStepFrequency(), 2) + " step/s");
-        DataManager.WriteDataInFile(dataFileName, navConfig, "Front foot : " + Converter.Round(feetTracker.LeftFootInFrontRate() * 100f, 0) + "% left");
-        DataManager.WriteDataInFile(dataFileName, navConfig, "Walked path : " + hololensTracker.walkedPath);
-        DataManager.WriteDataInFile(dataFileName, navConfig, "Number of areas covered : " + hololensTracker.walkedPath.Count());
-        DataManager.WriteDataInFile(dataFileName, navConfig, "Average time in area : " + Converter.Round(hololensTracker.AverageTimeInArea(), 2) + " s");
-        DataManager.WriteDataInFile(dataFileName, navConfig, "Number of errors : " + hololensTracker.NumberOfErrors());
-        DataManager.WriteDataInFile(dataFileName, navConfig, "Total wrong areas : " + hololensTracker.TotalWrongAreas());
-        DataManager.WriteDataInFile(dataFileName, navConfig, "Total error time : " + Converter.Round(hololensTracker.TotalErrorTime(), 2) + " s");
-        DataManager.WriteDataInFile(dataFileName, navConfig, "Total error distance : " + Converter.Round(hololensTracker.TotalErrorDistance(), 2) + " m");
+        DataManager.WriteDataSummary(dataFileName, navConfig, SimTime, hololensTracker, feetTracker);
     }
 
     public void AddAdvice(Advice advice)
