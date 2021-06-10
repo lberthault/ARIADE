@@ -10203,6 +10203,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: HolographicRemoting
       objectReference: {fileID: 0}
+    - target: {fileID: 2461738174043341970, guid: c63a6247a5e361f4f8433c282bd2c8b0,
+        type: 3}
+      propertyPath: IP
+      value: 192.168.43.155
+      objectReference: {fileID: 0}
     - target: {fileID: 2461738174043341971, guid: c63a6247a5e361f4f8433c282bd2c8b0,
         type: 3}
       propertyPath: m_RootOrder
@@ -11372,7 +11377,7 @@ PrefabInstance:
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
       propertyPath: advice
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
@@ -11458,7 +11463,7 @@ PrefabInstance:
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
       propertyPath: adviceConfigName
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
