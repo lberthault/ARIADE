@@ -280,8 +280,8 @@ public class SimulationManager : MonoBehaviour
         float rX = 0f;
         ARROW_AIR = new AdviceConfig(arrowPrefab, arrowWrongWayPrefab, h, c, rY, rX);
 
-        h = 0.3f;
-        c = 0.3f;
+        h = 0.15f;
+        c = 0.2f;
         rY = new List<float>() { -90f, +90f, +180f, -90f, +90f, +0f, +180f };
         rX = 90f;
         ARROW_GROUND = new AdviceConfig(arrowPrefab, arrowWrongWayPrefab, h, c, rY, rX);
@@ -293,7 +293,7 @@ public class SimulationManager : MonoBehaviour
         LIGHT = new AdviceConfig(null, lightWrongWayPrefab, h, c, rY, rX);
 
         h = 0f;
-        c = 0.4f;
+        c = 0.3f;
         rY = new List<float>() { -90f, +90f, +180f, 0f, +0f, -50f, +180f };
         rX = 0f;
         PEANUT = new AdviceConfig(peanutPrefab, peanutWrongWayPrefab, h, c, rY, rX);

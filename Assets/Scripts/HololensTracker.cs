@@ -477,9 +477,9 @@ public class HololensTracker : MonoBehaviour
                                 if (nextArea.InBigArea() && nextNextArea.InBigArea())
                                 {
                                     SetCompanionState(0);
-                                    object[] parms = new object[3] { currentArea, nextNextArea, NextArea(3) };
+                                    object[] parms = new object[3] { currentArea, nextArea, nextNextArea };
                                     StopCoroutine(nameof(MoveCompanion));
-                                    StartCoroutine(nameof(MoveCompanion), parms);
+                                    StartCoroutine(nameof(MoveCompanion2), parms);
                                 } else if (!nextArea.InBigArea())
                                 {
                                     SetCompanionState(0);
@@ -600,7 +600,7 @@ public class HololensTracker : MonoBehaviour
         Vector3 initRot = simManager.peanut.transform.rotation.eulerAngles;
         Vector3 finalPos = AdviceBasePosition(nextArea) + AdvicePositionOffset(currentArea, nextArea, nextNextArea);
         Vector3 finalRot = AdviceRotation(currentArea, nextArea, nextNextArea);
-        int vertexCount = 100;
+        int vertexCount = 80;
         Vector3 medRot = new Vector3(initRot.x, initRot.y, initRot.z);
         switch (GetAction(currentArea, nextArea, nextNextArea))
         {
@@ -658,6 +658,56 @@ public class HololensTracker : MonoBehaviour
             yield return new WaitForSeconds(0.01f);
         }
 
+        yield return null;
+    }
+
+    private IEnumerator MoveCompanion2(object[] parms)
+    {
+        Area currentArea = (Area)parms[0];
+        Area nextArea = (Area)parms[1];
+        Area nextNextArea = (Area)parms[2];
+        Vector3 initPos = simManager.peanut.transform.position;
+        Vector3 initRot = simManager.peanut.transform.rotation.eulerAngles;
+        Vector3 finalPos = AdviceBasePosition(nextArea) + AdvicePositionOffset(currentArea, nextArea, nextNextArea);
+        Vector3 finalRot = AdviceRotation(currentArea, nextArea, nextNextArea);
+        int vertexCount = 80;
+        Vector3 medRot = new Vector3(initRot.x, initRot.y, initRot.z);
+        switch (GetAction(currentArea, nextArea, nextNextArea))
+        {
+            case Action.TURN_LEFT: medRot.y -= 90f; break;
+            case Action.TURN_RIGHT: medRot.y += 90f; break;
+            case Action.GO_FORWARD: medRot.y += 180f; break;
+        }
+        Quaternion r0 = simManager.peanut.transform.rotation;
+        simManager.peanut.transform.LookAt(Converter.AreaToVector3(nextArea, simManager.peanut.transform.position.y));
+        Quaternion r1 = simManager.peanut.transform.rotation;
+        simManager.peanut.transform.rotation = r0;
+        float turnSpeed = 0f;
+        float turnSpeedChange = 0.1f;
+        //angle we need to turn
+        float angleToTurn;
+        while (true)
+        {
+            angleToTurn = Quaternion.Angle(simManager.peanut.transform.rotation, r1);
+            if (angleToTurn < 5f)
+            {
+                break;
+            }
+            turnSpeed = Mathf.Min(angleToTurn, turnSpeed + turnSpeedChange);
+            simManager.peanut.transform.rotation = Quaternion.Lerp(simManager.peanut.transform.rotation, r1, Mathf.Clamp01(angleToTurn > 0 ? turnSpeed / angleToTurn : 0f));
+
+
+            yield return new WaitForSeconds(0.01f);
+        }
+
+        for (float ratio = 0; ratio <= 1; ratio += 1f / vertexCount)
+        {
+            simManager.peanut.transform.position = initPos + (finalPos - initPos) * ratio;
+            yield return new WaitForSeconds(0.001f);
+        }
+
+        object[] parms2 = new object[3] { nextArea, nextNextArea, NextArea(3) };
+        StartCoroutine(nameof(MoveCompanion), parms2);
         yield return null;
     }
 
