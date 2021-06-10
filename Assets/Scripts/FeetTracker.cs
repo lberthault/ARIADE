@@ -138,7 +138,7 @@ public class FeetTracker : MonoBehaviour
     {
         int res = foot.Track(simTime);
         // Set front foot in different color
-        if (simManager.Mode == SimulationManager.DEBUG_MODE)
+        if (simManager.mode == SimulationManager.Mode.TEST)
         {
             foot.gameObject.GetComponentInChildren<MeshRenderer>().material = foot == frontFoot ? frontFootMaterial : backFootMaterial;
         }
@@ -220,7 +220,7 @@ public class FeetTracker : MonoBehaviour
         Vector3 posL = ProjectOnFloor(lFootData.Position);
         Vector3 posR = ProjectOnFloor(rFootData.Position);
         Vector3 OC = (posL + posR) / 2.0f;
-        if (simManager.Mode == SimulationManager.DEBUG_MODE)
+        if (simManager.drawLines)
         {
             // Draw direction line
             UpdateDirectionLine(OC, OC + v / Mathf.Sqrt(ScalarProduct(v, v)) * directionLineLength, Color.black);

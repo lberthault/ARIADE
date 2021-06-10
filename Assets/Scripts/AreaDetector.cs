@@ -33,7 +33,6 @@ public class AreaDetector : MonoBehaviour
                 Landmark landmark = renderer.gameObject.GetComponent<Landmark>();
                 if (landmarksToDisplay.Contains(landmark.position))
                 {
-                    Debug.Log(Area);
                     ((Renderer)renderer).enabled = true;
                     ((Renderer)renderer).material.mainTexture = Texture;
                     SimulationManager.SetObscurable(renderer.gameObject);

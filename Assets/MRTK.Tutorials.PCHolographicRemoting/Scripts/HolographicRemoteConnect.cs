@@ -34,9 +34,6 @@ public class HolographicRemoteConnect : MonoBehaviour
 
     IEnumerator LoadDevice(string newDevice)
     {
-        //List<XRInputSubsystem> l = new List<XRInputSubsystem>();
-        //SubsystemManager.GetInstances<XRInputSubsystem>(l);
-        //l[0].Start();
         XRSettings.LoadDeviceByName(newDevice);
         yield return null;
         XRSettings.enabled = true;

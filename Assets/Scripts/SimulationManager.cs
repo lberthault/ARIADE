@@ -6,6 +6,8 @@ using System;
 using QTMRealTimeSDK;
 using QualisysRealTime.Unity;
 using UnityEditor;
+using Microsoft.MixedReality.Toolkit;
+using UnityEngine.SpatialTracking;
 
 public class SimulationManager : MonoBehaviour
 {
@@ -26,18 +28,16 @@ public class SimulationManager : MonoBehaviour
     public const int TRIAL_ENDED = 2;
 
     // Debug
-    public const int DEBUG_MODE = 0;
-    public const int XP_MODE = 1;
-    [SerializeField]
-    private bool debugMode;
-    [SerializeField]
-    private bool drawLines, setOcclusion, manualController, drawGUI;
-    public int Mode
+
+    public enum Mode
     {
-        get { return debugMode ? DEBUG_MODE : XP_MODE; }
+        XP,
+        TEST
     }
+
     [SerializeField]
-    private List<GameObject> debugObjects;
+    public bool drawLines, setOcclusion, manualController, drawGUI;
+    public Mode mode;
     [SerializeField]
     private List<GameObject> invisibleObjects;
     [SerializeField]
@@ -77,14 +77,15 @@ public class SimulationManager : MonoBehaviour
     {
         ARROW,
         LIGHT,
-        PEANUT
+        PEANUT,
     };
 
     public enum AdviceConfigName
     {
         ARROW_AIR,
         ARROW_GROUND,
-        LIGHT
+        LIGHT,
+        PEANUT
     }
 
     [SerializeField]
@@ -104,12 +105,14 @@ public class SimulationManager : MonoBehaviour
                     return ARROW_GROUND;
                 case (AdviceConfigName.LIGHT):
                     return LIGHT;
+                case (AdviceConfigName.PEANUT):
+                    return PEANUT;
                 default: return ARROW_AIR;
             };
         }
     }
 
-    public AdviceConfig ARROW_AIR, ARROW_GROUND, LIGHT;
+    public AdviceConfig ARROW_AIR, ARROW_GROUND, LIGHT, PEANUT;
 
     [SerializeField]
     public GameObject arrowPrefab, lightPrefab, peanutPrefab;
@@ -161,13 +164,15 @@ public class SimulationManager : MonoBehaviour
     private GameObject areaDetectorPrefab;
     public float AreaDetectorSize { get; set; }
 
+    public GameObject peanut;
+
     void Start()
     {
         InitiateAdviceConfig();
         InitiateVariables();
         InitiateComponents();
         InitiateGUI();
-        List<Area> toDestroy = new List<Area>();
+
         foreach (Area area in Area.BigAreaAreas())
         {
             if (!trialPath.Contains(area))
@@ -178,39 +183,45 @@ public class SimulationManager : MonoBehaviour
         
         SetTrialState(TRIAL_NOT_STARTED);
 
-        foreach (GameObject o in debugObjects)
-        {
-            o.SetActive(debugMode);
-        }
-
-        if (setOcclusion)
+        if (mode == Mode.XP)
         {
             foreach (GameObject o in invisibleObjects)
             {
-                SetInvisible(o);
-            }
-            foreach (GameObject o in obscurableObjects)
-            {
+                o.SetActive(false);
                 SetObscurable(o);
             }
-        }
-
-        if (drawLines)
+        } else
         {
-            DrawTrialPath();
-        }
+            if (setOcclusion)
+            {
+                foreach (GameObject o in invisibleObjects)
+                {
+                    SetInvisible(o);
+                }
+                foreach (GameObject o in obscurableObjects)
+                {
+                    SetObscurable(o);
+                }
+            }
+            if (drawLines)
+            {
+                DrawTrialPath();
+            }
+            canvasGUI.SetActive(drawGUI);
+            if (manualController)
+            {
+                HololensController hc = hololens.AddComponent<HololensController>();
+                hc.movementSpeed = debugMovementSpeed;
+                hc.mouseSensitivity = debugMouseSensitivity;
+            }
+            else
+            {
+                //InitQTMServer();
+                //StartCoroutine(nameof(CheckQTMConnection));
+            }
 
-        canvasGUI.SetActive(drawGUI);
-        if (manualController)
-        {
-            HololensController hc = hololens.AddComponent<HololensController>();
-            hc.movementSpeed = debugMovementSpeed;
-            hc.mouseSensitivity = debugMouseSensitivity;
-        } else {
-            //InitQTMServer();
-            //StartCoroutine(nameof(CheckQTMConnection));
         }
-
+       
         string prefix = "Assets/Landmarks/" + pathName + "/";
         string suffix = ".png";
         bool bigAreaIsDone = false;
@@ -236,6 +247,8 @@ public class SimulationManager : MonoBehaviour
                 currentTexture++;
             }
         }
+
+        Camera.main.GetComponent<TrackedPoseDriver>().enabled = false;
     }
 
     private void DisableAreaDetection(Area area)
@@ -278,6 +291,12 @@ public class SimulationManager : MonoBehaviour
         rY = new List<float>() { -90f, +90f, +180f, -90f, +90f, +30f, +180f };
         rX = 0f;
         LIGHT = new AdviceConfig(null, lightWrongWayPrefab, h, c, rY, rX);
+
+        h = 0f;
+        c = 0.4f;
+        rY = new List<float>() { -90f, +90f, +180f, 0f, +0f, -30f, +180f };
+        rX = 0f;
+        PEANUT = new AdviceConfig(peanutPrefab, peanutWrongWayPrefab, h, c, rY, rX);
     }
 
     private void InitiateVariables()
@@ -306,8 +325,7 @@ public class SimulationManager : MonoBehaviour
         pathText.text = "Path " + trialPath.Name;
         adviceText.text = "Advice: " + advice.ToString();
         participantText.text = "Participant: " + participantName;
-        modeText.text = debugMode ? "Debug Mode" : "XP Mode";
-        canvasGUI.SetActive(debugMode);
+        modeText.text = (mode == Mode.XP) ? "XP Mode" : "Test Mode";
     }
 
     private void InitiateComponents()
@@ -338,15 +356,36 @@ public class SimulationManager : MonoBehaviour
         }
     }
 
+    LineRenderer lr;
+    private bool? prevCalibrationStatus = null;
     void Update()
     {
+
+        Debug.Log(CoreServices.InputSystem.EyeGazeProvider.IsEyeTrackingEnabledAndValid);
+        // Get the latest calibration state from the EyeGazeProvider
+        bool? calibrationStatus = CoreServices.InputSystem?.EyeGazeProvider?.IsEyeCalibrationValid;
+
+
+     /*
+            Vector3 hit = CoreServices.InputSystem.EyeGazeProvider.HitPosition;
+        if (lr == null)
+        {
+            lr = gameObject.AddComponent<LineRenderer>();
+            lr.positionCount = 2;
+            lr.startWidth = 0.1f;
+            lr.endWidth = 0.1f;
+            lr.startColor = Color.green;
+            lr.endColor = Color.green;
+        }
+        lr.SetPosition(0, Camera.main.transform.position);
+        lr.SetPosition(1, hit);
         if (isTracking)
         {
             SimTime += Time.deltaTime;
         } else if (trialState == TRIAL_ONGOING) {
             StartCoroutine(nameof(Track));
             isTracking = true;
-        }
+        }*/
     }
 
     // Every time the coroutine starts, the trackers are told to acquire data and update text files
@@ -595,8 +634,6 @@ public class SimulationManager : MonoBehaviour
     }
 
     private int segments = 100;
-    private float xradius = 0.5f;
-    private float zradius = 0.5f;
 
     public static void SetObscurable(GameObject o)
     {
@@ -732,7 +769,7 @@ public class SimulationManager : MonoBehaviour
 
     public void RemoveAllAdvice()
     {
-        if (advice == AdviceName.ARROW)
+        if (advice == AdviceName.ARROW || advice == AdviceName.PEANUT)
         {
             foreach (Advice advice in visibleAdvice)
             {

@@ -19,6 +19,13 @@ public class Advice
         this.advice = GameObject.Instantiate(advicePrefab, position, Quaternion.Euler(rotation));
     }
 
+    public Advice(Area area, GameObject advicePrefab, Vector3 position, Vector3 rotation, int animState)
+    {
+        this.area = new Area(area);
+        this.advice = GameObject.Instantiate(advicePrefab, position, Quaternion.Euler(rotation));
+        advice.GetComponent<Animator>().SetInteger("State", animState);
+    }
+
     // Removes the advice from scene and memory
     public void Remove()
     {

@@ -73,7 +73,7 @@ public class FootTracker : MonoBehaviour
         simManager = GameObject.Find("SimulationManager").GetComponent<SimulationManager>();
         dataFileName = foot + "FootData";
         data = new List<DataSnapshot>();
-        if (simManager.Mode == SimulationManager.DEBUG_MODE)
+        if (simManager.drawLines)
         {
             SetupTrailRenderer();
         }
