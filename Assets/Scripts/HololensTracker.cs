@@ -71,6 +71,22 @@ public class HololensTracker : MonoBehaviour
             if (trailRenderer != null) trailRenderer.Clear();
         }
         lastPosition = transform.position;
+
+        if (simManager.GetAdviceName() == SimulationManager.AdviceName.PEANUT && simManager.Peanut == null)
+        {
+            Area nextArea = NextArea(0);
+            Area nextNextArea = NextArea(1);
+            Area nextNextNextArea = NextArea(2);
+            Vector3 position = AdviceBasePosition(nextNextArea) + AdvicePositionOffset(nextArea, nextNextArea, nextNextNextArea);
+            Vector3 rotation = AdviceRotation(nextArea, nextNextArea, nextNextNextArea);
+            InstantiateCompanion(position, Quaternion.Euler(rotation));
+            int direction = 1;
+            if (GetAction(nextArea, nextNextArea, nextNextNextArea) == Action.TURN_LEFT)
+            {
+                direction = -1;
+            }
+            SetCompanionState(direction);
+        }
     }
 
     private void CheckTrailRendererModifications()
@@ -113,9 +129,11 @@ public class HololensTracker : MonoBehaviour
 
     public void WriteData()
     {
+        /*
         DataManager.WriteDataInFile(dataFileName, simManager.GetNavConfig(), "t = " + simTime + " : pos = " + transform.position + " rot = " + transform.rotation.eulerAngles);
         DataManager.WriteDataInFile(dataFileName, simManager.GetNavConfig(), "      inst_v = " + Converter.Round(CurrentSpeed(), 2) + " prev_inst_a = " + Converter.Round(PreviousAcceleration(), 2));
         DataManager.WriteDataInFile(dataFileName, simManager.GetNavConfig(), "      total_d = " + Converter.Round(DistanceTravelled(), 2) + " mean_v = " + Converter.Round(MeanSpeed(), 2));
+        */
     }
 
     public Area AreaAtIndex(int i)
@@ -463,7 +481,7 @@ public class HololensTracker : MonoBehaviour
 
                         if (simManager.GetAdviceName() == SimulationManager.AdviceName.PEANUT)
                         {
-                            if (simManager.peanut == null)
+                            if (simManager.Peanut == null)
                             {
                                 InstantiateCompanion(position, Quaternion.Euler(rotation));
                                 int direction = 1;
@@ -474,18 +492,23 @@ public class HololensTracker : MonoBehaviour
                                 SetCompanionState(direction);
                             } else
                             {
-                                if (nextArea.InBigArea() && nextNextArea.InBigArea())
+                                if (walkedPath.Count() != 0)
                                 {
-                                    SetCompanionState(0);
-                                    object[] parms = new object[3] { currentArea, nextArea, nextNextArea };
-                                    StopCoroutine(nameof(MoveCompanion));
-                                    StartCoroutine(nameof(MoveCompanion2), parms);
-                                } else if (!nextArea.InBigArea())
-                                {
-                                    SetCompanionState(0);
-                                    object[] parms = new object[3] { currentArea, nextArea, nextNextArea };
-                                    StopCoroutine(nameof(MoveCompanion));
-                                    StartCoroutine(nameof(MoveCompanion), parms);
+
+                                    if (nextArea.InBigArea() && nextNextArea.InBigArea())
+                                    {
+                                        SetCompanionState(0);
+                                        object[] parms = new object[3] { currentArea, nextArea, nextNextArea };
+                                        StopCoroutine(nameof(MoveCompanion));
+                                        StartCoroutine(nameof(MoveCompanion2), parms);
+                                    }
+                                    else if (!nextArea.InBigArea())
+                                    {
+                                        SetCompanionState(0);
+                                        object[] parms = new object[3] { currentArea, nextArea, nextNextArea };
+                                        StopCoroutine(nameof(MoveCompanion));
+                                        StartCoroutine(nameof(MoveCompanion), parms);
+                                    }
                                 }
                             }
                         }
@@ -596,8 +619,8 @@ public class HololensTracker : MonoBehaviour
         Area currentArea = (Area)parms[0];
         Area nextArea = (Area)parms[1];
         Area nextNextArea = (Area)parms[2];
-        Vector3 initPos = simManager.peanut.transform.position;
-        Vector3 initRot = simManager.peanut.transform.rotation.eulerAngles;
+        Vector3 initPos = simManager.Peanut.transform.position;
+        Vector3 initRot = simManager.Peanut.transform.rotation.eulerAngles;
         Vector3 finalPos = AdviceBasePosition(nextArea) + AdvicePositionOffset(currentArea, nextArea, nextNextArea);
         Vector3 finalRot = AdviceRotation(currentArea, nextArea, nextNextArea);
         int vertexCount = 80;
@@ -608,23 +631,23 @@ public class HololensTracker : MonoBehaviour
             case Action.TURN_RIGHT: medRot.y += 90f; break;
             case Action.GO_FORWARD: medRot.y += 180f; break;
         }
-        Quaternion r0 = simManager.peanut.transform.rotation;
-        simManager.peanut.transform.LookAt(Converter.AreaToVector3(nextArea, simManager.peanut.transform.position.y));
-        Quaternion r1 = simManager.peanut.transform.rotation;
-        simManager.peanut.transform.rotation = r0;
+        Quaternion r0 = simManager.Peanut.transform.rotation;
+        simManager.Peanut.transform.LookAt(Converter.AreaToVector3(nextArea, simManager.Peanut.transform.position.y));
+        Quaternion r1 = simManager.Peanut.transform.rotation;
+        simManager.Peanut.transform.rotation = r0;
         float turnSpeed = 0f;
         float turnSpeedChange = 0.1f;
         //angle we need to turn
         float angleToTurn;
         while (true)
         {
-            angleToTurn = Quaternion.Angle(simManager.peanut.transform.rotation, r1); 
+            angleToTurn = Quaternion.Angle(simManager.Peanut.transform.rotation, r1); 
             if (angleToTurn < 5f)
             {
                 break;
             }
             turnSpeed = Mathf.Min(angleToTurn, turnSpeed + turnSpeedChange);
-            simManager.peanut.transform.rotation = Quaternion.Lerp(simManager.peanut.transform.rotation, r1, Mathf.Clamp01(angleToTurn > 0 ? turnSpeed / angleToTurn : 0f));
+            simManager.Peanut.transform.rotation = Quaternion.Lerp(simManager.Peanut.transform.rotation, r1, Mathf.Clamp01(angleToTurn > 0 ? turnSpeed / angleToTurn : 0f));
   
 
             yield return new WaitForSeconds(0.01f);
@@ -634,7 +657,7 @@ public class HololensTracker : MonoBehaviour
 
         for (float ratio = 0; ratio <= 1; ratio += 1f / vertexCount)
         {
-            simManager.peanut.transform.position = initPos + (finalPos - initPos) * ratio;
+            simManager.Peanut.transform.position = initPos + (finalPos - initPos) * ratio;
             yield return new WaitForSeconds(0.001f);
         }
 
@@ -647,13 +670,13 @@ public class HololensTracker : MonoBehaviour
 
         while (true)
         {
-            angleToTurn = Quaternion.Angle(simManager.peanut.transform.rotation, Quaternion.Euler(finalRot));
+            angleToTurn = Quaternion.Angle(simManager.Peanut.transform.rotation, Quaternion.Euler(finalRot));
             if (angleToTurn < 5f)
             {
                 break;
             }
             turnSpeed = Mathf.Min(angleToTurn, turnSpeed + turnSpeedChange);
-            simManager.peanut.transform.rotation = Quaternion.Lerp(simManager.peanut.transform.rotation, Quaternion.Euler(finalRot), Mathf.Clamp01(angleToTurn > 0 ? turnSpeed / angleToTurn : 0f));
+            simManager.Peanut.transform.rotation = Quaternion.Lerp(simManager.Peanut.transform.rotation, Quaternion.Euler(finalRot), Mathf.Clamp01(angleToTurn > 0 ? turnSpeed / angleToTurn : 0f));
 
             yield return new WaitForSeconds(0.01f);
         }
@@ -666,8 +689,8 @@ public class HololensTracker : MonoBehaviour
         Area currentArea = (Area)parms[0];
         Area nextArea = (Area)parms[1];
         Area nextNextArea = (Area)parms[2];
-        Vector3 initPos = simManager.peanut.transform.position;
-        Vector3 initRot = simManager.peanut.transform.rotation.eulerAngles;
+        Vector3 initPos = simManager.Peanut.transform.position;
+        Vector3 initRot = simManager.Peanut.transform.rotation.eulerAngles;
         Vector3 finalPos = AdviceBasePosition(nextArea) + AdvicePositionOffset(currentArea, nextArea, nextNextArea);
         Vector3 finalRot = AdviceRotation(currentArea, nextArea, nextNextArea);
         int vertexCount = 80;
@@ -678,23 +701,23 @@ public class HololensTracker : MonoBehaviour
             case Action.TURN_RIGHT: medRot.y += 90f; break;
             case Action.GO_FORWARD: medRot.y += 180f; break;
         }
-        Quaternion r0 = simManager.peanut.transform.rotation;
-        simManager.peanut.transform.LookAt(Converter.AreaToVector3(nextArea, simManager.peanut.transform.position.y));
-        Quaternion r1 = simManager.peanut.transform.rotation;
-        simManager.peanut.transform.rotation = r0;
+        Quaternion r0 = simManager.Peanut.transform.rotation;
+        simManager.Peanut.transform.LookAt(Converter.AreaToVector3(nextArea, simManager.Peanut.transform.position.y));
+        Quaternion r1 = simManager.Peanut.transform.rotation;
+        simManager.Peanut.transform.rotation = r0;
         float turnSpeed = 0f;
         float turnSpeedChange = 0.1f;
         //angle we need to turn
         float angleToTurn;
         while (true)
         {
-            angleToTurn = Quaternion.Angle(simManager.peanut.transform.rotation, r1);
+            angleToTurn = Quaternion.Angle(simManager.Peanut.transform.rotation, r1);
             if (angleToTurn < 5f)
             {
                 break;
             }
             turnSpeed = Mathf.Min(angleToTurn, turnSpeed + turnSpeedChange);
-            simManager.peanut.transform.rotation = Quaternion.Lerp(simManager.peanut.transform.rotation, r1, Mathf.Clamp01(angleToTurn > 0 ? turnSpeed / angleToTurn : 0f));
+            simManager.Peanut.transform.rotation = Quaternion.Lerp(simManager.Peanut.transform.rotation, r1, Mathf.Clamp01(angleToTurn > 0 ? turnSpeed / angleToTurn : 0f));
 
 
             yield return new WaitForSeconds(0.01f);
@@ -702,7 +725,7 @@ public class HololensTracker : MonoBehaviour
 
         for (float ratio = 0; ratio <= 1; ratio += 1f / vertexCount)
         {
-            simManager.peanut.transform.position = initPos + (finalPos - initPos) * ratio;
+            simManager.Peanut.transform.position = initPos + (finalPos - initPos) * ratio;
             yield return new WaitForSeconds(0.001f);
         }
 
@@ -713,12 +736,12 @@ public class HololensTracker : MonoBehaviour
 
     private void SetCompanionState(int state)
     {
-        simManager.peanut.GetComponent<Animator>().SetInteger("State", state);
+        simManager.Peanut.GetComponent<Animator>().SetInteger("State", state);
     }
 
     private void RemoveLastAdvice(Area lastArea)
     {
-        if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW)
+        if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW || simManager.GetAdviceName() == SimulationManager.AdviceName.PEANUT)
         {
             simManager.RemoveAdviceAtArea(lastArea);
         } else if (simManager.GetAdviceName() == SimulationManager.AdviceName.LIGHT)
@@ -758,7 +781,7 @@ public class HololensTracker : MonoBehaviour
 
     private void InstantiateCompanion(Vector3 position, Quaternion rotation)
     {
-        simManager.peanut = Instantiate(simManager.AdviceConfig.AdvicePrefab, position, rotation);
+        simManager.Peanut = Instantiate(simManager.AdviceConfig.AdvicePrefab, position, rotation);
     }
 
     private Direction GetDirection(Area from, Area to)

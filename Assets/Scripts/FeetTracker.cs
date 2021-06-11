@@ -159,13 +159,13 @@ public class FeetTracker : MonoBehaviour
 
     private void OnStepStart(FootTracker foot)
     {
-        steps.Add(foot.LastStep);
-        DataManager.WriteDataInFile(dataFileName, simManager.GetNavConfig(), "t = " + simTime + " : " + foot.Name + " starts a step");
+        steps.Add(foot.LastStep);/*
+        DataManager.WriteDataInFile(dataFileName, simManager.GetNavConfig(), "t = " + simTime + " : " + foot.Name + " starts a step");*/
     }
 
     private void OnStepEnd(FootTracker foot)
-    {
-        DataManager.WriteDataInFile(dataFileName, simManager.GetNavConfig(), "t = " + simTime + " : " + foot.Name + " ends a step (total=" + StepCount + ")");
+    {/*
+        DataManager.WriteDataInFile(dataFileName, simManager.GetNavConfig(), "t = " + simTime + " : " + foot.Name + " ends a step (total=" + StepCount + ")");*/
     }
 
     public float MeanStepFrequency()

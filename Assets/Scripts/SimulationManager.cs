@@ -72,6 +72,7 @@ public class SimulationManager : MonoBehaviour
     private PathName pathName;
     public Path trialPath;
     public Path remainingPath;
+
     // Advice
     public enum AdviceName
     {
@@ -132,6 +133,13 @@ public class SimulationManager : MonoBehaviour
         get { return AdviceConfig.AdviceBaseOffsetCoef * AreaDetectorSize; }
     }
 
+    [SerializeField]
+    private float lightPathDelayInSeconds;
+    [SerializeField]
+    private float lightPathWidth = 0.08f;
+    [SerializeField]
+    private int lightPathCurveSegments = 100;
+
     // Data
     private string dataFileName = "SimulationData";
 
@@ -164,7 +172,7 @@ public class SimulationManager : MonoBehaviour
     private GameObject areaDetectorPrefab;
     public float AreaDetectorSize { get; set; }
 
-    public GameObject peanut;
+    public GameObject Peanut { get; set; }
 
     void Start()
     {
@@ -504,7 +512,23 @@ public class SimulationManager : MonoBehaviour
     // The data written in the synthetical file at the end of the trial
     public void WriteData()
     {
-        DataManager.WriteDataSummary(dataFileName, navConfig, SimTime, hololensTracker, feetTracker);
+        string header = "Path;Advice;Simulation time (s);Distance travelled (m);Mean speed (m/s);Number of steps;Mean step frequency (step/s);Percent of left foot in front;Walked path;Number of areas covered;Average time in area (s);Nbr errors; Nbr wrong areas;Total error time (s);Total error distance (m)";
+        string data = navConfig.Path.Name + ";"
+                + navConfig.Advice + ";"
+                + SimTime.ToString() + ";"
+                + hololensTracker.DistanceTravelled().ToString() + ";"
+                + hololensTracker.MeanSpeed().ToString() + ";"
+                + feetTracker.StepCount.ToString() + ";"
+                + feetTracker.MeanStepFrequency().ToString() + ";"
+                + feetTracker.LeftFootInFrontRate().ToString() + ";"
+                + hololensTracker.walkedPath.ToString() + ";"
+                + hololensTracker.walkedPath.Count().ToString() + ";"
+                + hololensTracker.AverageTimeInArea().ToString() + ";"
+                + hololensTracker.NumberOfErrors().ToString() + ";"
+                + hololensTracker.TotalWrongAreas().ToString() + ";"
+                + hololensTracker.TotalErrorTime().ToString() + ";"
+                + hololensTracker.TotalErrorDistance().ToString();
+        DataManager.WriteData(navConfig, dataFileName, header, data, true);
     }
 
     public void AddAdvice(Advice advice)
@@ -515,8 +539,6 @@ public class SimulationManager : MonoBehaviour
     int vertexCount = 50;
     List<int> flags = new List<int>();
     private Vector3 start;
-
-    public float lightPathDelayInSeconds;
 
     IEnumerator DrawPoints0(object[] parms)
     {
@@ -584,8 +606,8 @@ public class SimulationManager : MonoBehaviour
             SetObscurable(lightPathLineRenderer.gameObject);
             lightPathLineRenderer.startColor = Color.white;
             lightPathLineRenderer.endColor = Color.white;
-            lightPathLineRenderer.startWidth = 0.08f;
-            lightPathLineRenderer.endWidth = 0.08f;
+            lightPathLineRenderer.startWidth = lightPathWidth;
+            lightPathLineRenderer.endWidth = lightPathWidth;
             lightPathLineRenderer.numCornerVertices = 0;
             start = from;
             object[] parms = new object[3] { at, to, toto };
@@ -611,8 +633,6 @@ public class SimulationManager : MonoBehaviour
         }
 
     }
-
-    private int segments = 100;
 
     public static void SetObscurable(GameObject o)
     {
@@ -647,7 +667,7 @@ public class SimulationManager : MonoBehaviour
             lightPathWrongWayLineRenderer.useWorldSpace = false;
         }
         lightPathWrongWayLineRenderer.gameObject.transform.eulerAngles = Vector3.zero;
-        lightPathWrongWayLineRenderer.positionCount = segments + 1;
+        lightPathWrongWayLineRenderer.positionCount = lightPathCurveSegments + 1;
         lightPathWrongWayLineRenderer.gameObject.transform.position = Converter.AreaToVector3(area, 0.2f) + offset;
         CreatePoints(area, offset, rotationY);
     }
