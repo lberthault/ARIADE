@@ -7545,7 +7545,7 @@ Transform:
   - {fileID: 1746829112}
   - {fileID: 1319365649}
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1611643517
 PrefabInstance:
@@ -10147,7 +10147,7 @@ PrefabInstance:
     - target: {fileID: 2461738174043341971, guid: c63a6247a5e361f4f8433c282bd2c8b0,
         type: 3}
       propertyPath: m_RootOrder
-      value: 11
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 2461738174043341971, guid: c63a6247a5e361f4f8433c282bd2c8b0,
         type: 3}
@@ -10500,7 +10500,7 @@ Transform:
   m_Children:
   - {fileID: 307107264}
   m_Father: {fileID: 0}
-  m_RootOrder: 10
+  m_RootOrder: 11
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2075089502
 PrefabInstance:
@@ -11084,7 +11084,7 @@ PrefabInstance:
     - target: {fileID: 518355897404047931, guid: 7a70cdc1ebc1d2945a66244c2e374c81,
         type: 3}
       propertyPath: m_RootOrder
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 518355897404047931, guid: 7a70cdc1ebc1d2945a66244c2e374c81,
         type: 3}
@@ -11379,7 +11379,7 @@ PrefabInstance:
         type: 3}
       propertyPath: peanutPrefab
       value: 
-      objectReference: {fileID: 4645492185844709502, guid: ca29277f48062da488be510618c56ad5,
+      objectReference: {fileID: 512396552925032004, guid: dbc1b5d1410f8474fbb872a1c1ce35e1,
         type: 3}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
@@ -11391,6 +11391,11 @@ PrefabInstance:
       propertyPath: trialStateGUI
       value: 
       objectReference: {fileID: 548466338}
+    - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
+        type: 3}
+      propertyPath: lightPathWidth
+      value: 0.5
+      objectReference: {fileID: 0}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
       propertyPath: participantGUI

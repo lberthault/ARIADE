@@ -227,7 +227,8 @@ public class SimulationManager : MonoBehaviour
                 //InitQTMServer();
                 //StartCoroutine(nameof(CheckQTMConnection));
             }
-
+            hololensTracker.InitAdvice();
+          
         }
        
         string prefix = "Assets/Landmarks/" + pathName + "/";
@@ -295,7 +296,7 @@ public class SimulationManager : MonoBehaviour
         ARROW_GROUND = new AdviceConfig(arrowPrefab, arrowWrongWayPrefab, h, c, rY, rX);
 
         h = 0.3f;
-        c = 0.8f;
+        c = 0.2f;
         rY = new List<float>() { -90f, +90f, +180f, -90f, +90f, +30f, +180f };
         rX = 0f;
         LIGHT = new AdviceConfig(null, lightWrongWayPrefab, h, c, rY, rX);
@@ -557,18 +558,25 @@ public class SimulationManager : MonoBehaviour
             lightPathLineRenderer.SetPosition(lightPathLineRenderer.positionCount - 1, curve);
             yield return new WaitForSeconds(lightPathDelayInSeconds);
         }
-        for (float ratio = 0; ratio <= 1; ratio += 1f / vertexCount)
+        if (toto != null)
         {
-            Vector3 tangent1 = Vector3.Lerp((at + to) / 2f, to, ratio);
-            Vector3 tangent2 = Vector3.Lerp(to, (to + toto) / 2f, ratio);
-            Vector3 curve = Vector3.Lerp(tangent1, tangent2, ratio);
-            positionList.Add(curve);
-            lightPathLineRenderer.positionCount++;
-            lightPathLineRenderer.SetPosition(lightPathLineRenderer.positionCount - 1, curve);
-            yield return new WaitForSeconds(lightPathDelayInSeconds);
+            for (float ratio = 0; ratio <= 1; ratio += 1f / vertexCount)
+            {
+                Vector3 tangent1 = Vector3.Lerp((at + to) / 2f, to, ratio);
+                Vector3 tangent2 = Vector3.Lerp(to, (to + toto) / 2f, ratio);
+                Vector3 curve = Vector3.Lerp(tangent1, tangent2, ratio);
+                positionList.Add(curve);
+                lightPathLineRenderer.positionCount++;
+                lightPathLineRenderer.SetPosition(lightPathLineRenderer.positionCount - 1, curve);
+                yield return new WaitForSeconds(lightPathDelayInSeconds);
+            }
+
+            start = (to + toto) / 2f;
+        } else
+        {
+            start = (at + to) / 2f;
         }
 
-        start = (to + toto) / 2f;
         flags.Add(positionList.Count);
         yield return null;
     }
@@ -594,8 +602,28 @@ public class SimulationManager : MonoBehaviour
         flags.Add(positionList.Count);
         yield return null;
     }
-    public void DrawLightPath(Vector3 from, Vector3 at, Vector3 to, Vector3 toto)
+    public void DrawLightPath(Area fromArea, Area atArea, Area toArea, Area totoArea)
     {
+        Vector3 from = Converter.AreaToVector3(fromArea, 0.2f);
+        Vector3 at = Converter.AreaToVector3(atArea, 0.2f);
+        Vector3 to;
+        Vector3 toto;
+        if (toArea == null)
+        {
+            to = at;
+        } else
+        {
+            to = Converter.AreaToVector3(toArea, 0.2f);
+        }
+
+        if (totoArea == null)
+        {
+            toto = to;
+        } else
+        {
+            toto = Converter.AreaToVector3(totoArea, 0.2f);
+        }
+
         if (lightPathLineRenderer == null)
         {
             GameObject pathLine = new GameObject();
@@ -608,6 +636,8 @@ public class SimulationManager : MonoBehaviour
             lightPathLineRenderer.endColor = Color.white;
             lightPathLineRenderer.startWidth = lightPathWidth;
             lightPathLineRenderer.endWidth = lightPathWidth;
+            pathLine.transform.rotation = Quaternion.Euler(pathLine.transform.rotation.eulerAngles + new Vector3(90f, 0, 0));
+            lightPathLineRenderer.alignment = LineAlignment.Local;
             lightPathLineRenderer.numCornerVertices = 0;
             start = from;
             object[] parms = new object[3] { at, to, toto };

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class HololensTracker : MonoBehaviour
 {
@@ -71,22 +72,6 @@ public class HololensTracker : MonoBehaviour
             if (trailRenderer != null) trailRenderer.Clear();
         }
         lastPosition = transform.position;
-
-        if (simManager.GetAdviceName() == SimulationManager.AdviceName.PEANUT && simManager.Peanut == null)
-        {
-            Area nextArea = NextArea(0);
-            Area nextNextArea = NextArea(1);
-            Area nextNextNextArea = NextArea(2);
-            Vector3 position = AdviceBasePosition(nextNextArea) + AdvicePositionOffset(nextArea, nextNextArea, nextNextNextArea);
-            Vector3 rotation = AdviceRotation(nextArea, nextNextArea, nextNextNextArea);
-            InstantiateCompanion(position, Quaternion.Euler(rotation));
-            int direction = 1;
-            if (GetAction(nextArea, nextNextArea, nextNextNextArea) == Action.TURN_LEFT)
-            {
-                direction = -1;
-            }
-            SetCompanionState(direction);
-        }
     }
 
     private void CheckTrailRendererModifications()
@@ -268,6 +253,37 @@ public class HololensTracker : MonoBehaviour
 
     }
 
+    public void InitAdvice()
+    {
+        Area nextArea = NextArea(0);
+        Area nextNextArea = NextArea(1);
+        Area nextNextNextArea = NextArea(2);
+        Vector3 position;
+        Vector3 rotation;
+        if (simManager.GetAdviceName() == SimulationManager.AdviceName.PEANUT)
+        {
+            position = AdviceBasePosition(nextNextArea) + AdvicePositionOffset(nextArea, nextNextArea, nextNextNextArea, true);
+            rotation = AdviceRotation(nextArea, nextNextArea, nextNextNextArea, true);
+            InstantiateCompanion(position, Quaternion.Euler(rotation));
+            int direction = 1;
+            if (GetAction(nextArea, nextNextArea, nextNextNextArea) == Action.TURN_LEFT)
+            {
+                direction = -1;
+            }
+            SetCompanionState(direction);
+        }
+        else if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW)
+        {
+            position = AdviceBasePosition(nextNextArea) + AdvicePositionOffset(nextArea, nextNextArea, nextNextNextArea, true);
+            rotation = AdviceRotation(nextArea, nextNextArea, nextNextNextArea, true);
+            AddArrow(nextNextArea, position, rotation);
+        }
+        else
+        {
+            simManager.DrawLightPath(nextArea, nextNextArea, nextNextNextArea, NextArea(3));
+        }
+    }
+
     public int NumberOfErrors()
     {
         return errors.Count;
@@ -320,6 +336,8 @@ public class HololensTracker : MonoBehaviour
 
     private Area NextArea(int i)
     {
+        if (i >= simManager.remainingPath.Count())
+            return null;
         return simManager.remainingPath.Get(i);
     }
 
@@ -330,18 +348,25 @@ public class HololensTracker : MonoBehaviour
         {
           
             Area lastArea = walkedPath.GetLast();
+
+            // Prevent area double check
             if (lastArea != null && area.Equals(lastArea))
             {
                 return;
             }
 
+            // Update landmarks
             if (lastArea != null)
             {
                 lastArea.GetAreaDetector().RemoveLandmarks(true);
                 AreaDetector areaDetector = area.GetAreaDetector();
                 areaDetector.DisplayLandmarks(GetDirection(lastArea, area), true);
             }
+
+            // Copy entered area to add it an "in time"
             currentArea = new Area(area, simTime);
+
+            // Check if participant is on the right path and update remaining path
             bool onTheRightPath = false;
             if (NextArea(0).Equals(currentArea))
             {
@@ -362,11 +387,15 @@ public class HololensTracker : MonoBehaviour
                     }
                 }
             }
+
+            // Check if the participant has finished the trial
             if (simManager.remainingPath.Count() == 0)
             {
                 simManager.EndTrial();
                 return;
             }
+
+            // Store theoretical next and "next next" areas (i.e. disregarding the potential errors)
             Area nextArea = null;
             Area nextNextArea = null;
             if (simManager.remainingPath.Count() > 0)
@@ -381,139 +410,77 @@ public class HololensTracker : MonoBehaviour
 
             if (onTheRightPath)
             {
+                // If an error was registered but the participant has corrected it, remove it
                 if (currentError != null)
                 {
                     currentError.SetCorrect(simTime);
                     currentError = null;
                 }
-                if (lastArea != null)
+
+                // Remove previous advices if necessary
+                if (lastArea != null && (nextArea == null || nextNextArea != null))
                 {
-                    if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW)
+                    if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW || simManager.GetAdviceName() == SimulationManager.AdviceName.PEANUT)
                     {
-                        if (nextNextArea == null && nextArea != null)
-                        {
-
-                        }
-                        else
-                        {
-
-                            RemoveLastAdvice(lastArea);
-                        }
+                        RemoveLastAdvice(lastArea);
                     } else if (simManager.GetAdviceName() == SimulationManager.AdviceName.LIGHT)
                     {
-                        if (nextNextArea == null && nextArea != null)
+                        if (removeLightAdvice == 2)
                         {
-
+                            RemoveLastAdvice(lastArea);
+                            removeLightAdvice = 0;
                         } else
                         {
-                            if (removeLightAdvice == 2)
-                            {
-
-                                RemoveLastAdvice(lastArea);
-                                removeLightAdvice = 0;
-                            } else
-                            {
-                                removeLightAdvice++;
-                            }
-                        }
-                    } else
-                    {
-                        if (nextNextArea == null && nextArea != null)
-                        {
-
-                        }
-                        else
-                        {
-
-                            RemoveLastAdvice(lastArea);
+                            removeLightAdvice++;
                         }
                     }
                 }
-                lastMatchingArea = new Area(area);
-                matchingPath.Add(lastMatchingArea);
-                if (nextArea != null && nextNextArea != null)
+
+                // Update matching path because participant is on the right way
+                matchingPath.Add(new Area(area));
+
+                // Display the next advice
+
+                Vector3 position;
+                Vector3 rotation;
+                if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW)
                 {
-                    Vector3 position;
-                    Vector3 rotation;
-                    if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW)
+                    if (walkedPath.Count() != 0)
                     {
-                        /*if (nextArea.IsBigArea())
+                        position = AdviceBasePosition(nextArea);
+                        if (nextNextArea != null)
                         {
-                            Area a1, a2;
-                            a1 = NearestAreaInBigArea(currentArea);
-                            a2 = NearestAreaInBigArea(nextNextArea);
-                            float r = 0f;
-                            if (Mathf.Abs(a1.line - a2.line) + Mathf.Abs(a1.column - a2.column) == 2)
-                            {
-                                if (a1.Equals(new Area(3, 3)) || a1.Equals(new Area(2, 4)))
-                                    r = +45f;
-                                if (a1.Equals(new Area(2, 3)) || a1.Equals(new Area(3, 3)))
-                                    r = -45f;
-                            }
-                            Debug.Log(a1 + "-" + a2);
-                            position = AdviceBasePosition(a1) + AdvicePositionOffset(currentArea, a1, a2);
-                            rotation = AdviceRotation(currentArea, a1, a2) + new Vector3(0, r, 0);
-                            AddAdvice(a1, position, rotation);
-                            position = AdviceBasePosition(a2) + AdvicePositionOffset(a1, a2, nextNextArea);
-                            rotation = AdviceRotation(a1, a2, nextNextArea);
-                            AddAdvice(a2, position, rotation);
-                        } else
-                        {*/
-                            position = AdviceBasePosition(nextArea) + AdvicePositionOffset(currentArea, nextArea, nextNextArea);
-                            rotation = AdviceRotation(currentArea, nextArea, nextNextArea);
-                            AddArrow(nextArea, position, rotation);
-                        //}
-                    } else if (simManager.GetAdviceName() == SimulationManager.AdviceName.LIGHT)
-                    {
-
-                        if (simManager.remainingPath.Count() > 2)
-                        {
-                            simManager.DrawLightPath(Converter.AreaToVector3(currentArea, 0.2f), Converter.AreaToVector3(nextArea, 0.2f), Converter.AreaToVector3(nextNextArea, 0.2f), Converter.AreaToVector3(NextArea(2), 0.2f));
-
+                            position += AdvicePositionOffset(currentArea, nextArea, nextNextArea, true);
                         }
-
-                    } else
+                        rotation = AdviceRotation(currentArea, nextArea, nextNextArea, true);
+                        AddArrow(nextArea, position, rotation);
+                    }
+                } else if (simManager.GetAdviceName() == SimulationManager.AdviceName.LIGHT)
+                {
+                      simManager.DrawLightPath(currentArea, nextArea, nextNextArea, NextArea(2));
+                } else if (simManager.GetAdviceName() == SimulationManager.AdviceName.PEANUT)
+                {        
+                    if (walkedPath.Count() != 0)
                     {
-                        position = AdviceBasePosition(nextArea) + AdvicePositionOffset(currentArea, nextArea, nextNextArea);
-                        rotation = AdviceRotation(currentArea, nextArea, nextNextArea);
-                        
 
-
-                        if (simManager.GetAdviceName() == SimulationManager.AdviceName.PEANUT)
+                        if (nextArea.InBigArea() && nextNextArea.InBigArea())
                         {
-                            if (simManager.Peanut == null)
-                            {
-                                InstantiateCompanion(position, Quaternion.Euler(rotation));
-                                int direction = 1;
-                                if (GetAction(currentArea, nextArea, nextNextArea) == Action.TURN_LEFT)
-                                {
-                                    direction = -1;
-                                }
-                                SetCompanionState(direction);
-                            } else
-                            {
-                                if (walkedPath.Count() != 0)
-                                {
-
-                                    if (nextArea.InBigArea() && nextNextArea.InBigArea())
-                                    {
-                                        SetCompanionState(0);
-                                        object[] parms = new object[3] { currentArea, nextArea, nextNextArea };
-                                        StopCoroutine(nameof(MoveCompanion));
-                                        StartCoroutine(nameof(MoveCompanion2), parms);
-                                    }
-                                    else if (!nextArea.InBigArea())
-                                    {
-                                        SetCompanionState(0);
-                                        object[] parms = new object[3] { currentArea, nextArea, nextNextArea };
-                                        StopCoroutine(nameof(MoveCompanion));
-                                        StartCoroutine(nameof(MoveCompanion), parms);
-                                    }
-                                }
-                            }
+                            SetCompanionState(0);
+                            object[] parms = new object[3] { currentArea, nextArea, nextNextArea };
+                            StopCoroutine(nameof(MoveCompanion));
+                            StartCoroutine(nameof(MoveCompanion2), parms);
+                        }
+                        else if (!nextArea.InBigArea())
+                        {
+                            SetCompanionState(0);
+                            object[] parms = new object[3] { currentArea, nextArea, nextNextArea };
+                            StopCoroutine(nameof(MoveCompanion));
+                            StartCoroutine(nameof(MoveCompanion), parms);
                         }
                     }
+                    
                 }
+                
 
             }
             else
@@ -549,7 +516,7 @@ public class HololensTracker : MonoBehaviour
                     else if (simManager.GetAdviceName() == SimulationManager.AdviceName.LIGHT)
                     {
                         removeLightAdvice = 0;
-                        simManager.DrawLightPath(Converter.AreaToVector3(currentArea, 0.2f) + WrongWayAdvicePositionOffset(currentArea, NextArea(0)), Converter.AreaToVector3(NextArea(0), 0.2f), Converter.AreaToVector3(NextArea(1), 0.2f), Converter.AreaToVector3(NextArea(2), 0.2f));
+                        simManager.DrawLightPath(currentArea, NextArea(0), NextArea(1), NextArea(2));
                         // simManager.DrawLightPath(Converter.AreaToVector3(NextArea(0), 0.2f), Converter.AreaToVector3(NextArea(1), 0.2f));
                         position = AdviceBasePosition(currentArea) + WrongWayAdvicePositionOffset(currentArea, NextArea(0));
                         rotation = WrongWayAdviceRotation(currentArea, NextArea(0));
@@ -583,7 +550,7 @@ public class HololensTracker : MonoBehaviour
                         {
                             removeLightAdvice++;
                         }
-                        simManager.DrawLightPath(Converter.AreaToVector3(currentArea, 0.2f), Converter.AreaToVector3(NextArea(0), 0.2f), Converter.AreaToVector3(NextArea(1), 0.2f), Converter.AreaToVector3(NextArea(2), 0.2f));
+                        simManager.DrawLightPath(currentArea, NextArea(0), NextArea(1), NextArea(2));
 
                     } else
                     {
@@ -595,8 +562,8 @@ public class HololensTracker : MonoBehaviour
 
                 if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW)
                 {
-                    position = AdviceBasePosition(NextArea(0)) + AdvicePositionOffset(currentArea, NextArea(0), NextArea(1));
-                    rotation = AdviceRotation(currentArea, NextArea(0), NextArea(1));
+                    position = AdviceBasePosition(NextArea(0)) + AdvicePositionOffset(currentArea, NextArea(0), NextArea(1), true);
+                    rotation = AdviceRotation(currentArea, NextArea(0), NextArea(1), true);
                     AddArrow(NextArea(0), position, rotation);
                 } else if (simManager.GetAdviceName() == SimulationManager.AdviceName.PEANUT)
                 {
@@ -621,15 +588,29 @@ public class HololensTracker : MonoBehaviour
         Area nextNextArea = (Area)parms[2];
         Vector3 initPos = simManager.Peanut.transform.position;
         Vector3 initRot = simManager.Peanut.transform.rotation.eulerAngles;
-        Vector3 finalPos = AdviceBasePosition(nextArea) + AdvicePositionOffset(currentArea, nextArea, nextNextArea);
-        Vector3 finalRot = AdviceRotation(currentArea, nextArea, nextNextArea);
+        Vector3 finalPos = AdviceBasePosition(nextArea);
+        Vector3 finalRot = AdviceRotation(currentArea, nextArea, nextNextArea, true);
+        if (nextNextArea != null)
+        {
+            finalPos += AdvicePositionOffset(currentArea, nextArea, nextNextArea, true);
+        } else
+        {
+            finalRot.y -= simManager.AdviceConfig.AdviceRotationY[5];
+        }
+
         int vertexCount = 80;
         Vector3 medRot = new Vector3(initRot.x, initRot.y, initRot.z);
-        switch (GetAction(currentArea, nextArea, nextNextArea))
+        if (nextNextArea != null)
         {
-            case Action.TURN_LEFT: medRot.y -= 90f; break;
-            case Action.TURN_RIGHT: medRot.y += 90f; break;
-            case Action.GO_FORWARD: medRot.y += 180f; break;
+            switch (GetAction(currentArea, nextArea, nextNextArea))
+            {
+                case Action.TURN_LEFT: medRot.y += -90f; break;
+                case Action.TURN_RIGHT: medRot.y += 90f; break;
+                case Action.GO_FORWARD: medRot.y += 180f; break;
+            }
+        } else
+        {
+            medRot.y += 180f;
         }
         Quaternion r0 = simManager.Peanut.transform.rotation;
         simManager.Peanut.transform.LookAt(Converter.AreaToVector3(nextArea, simManager.Peanut.transform.position.y));
@@ -661,12 +642,18 @@ public class HololensTracker : MonoBehaviour
             yield return new WaitForSeconds(0.001f);
         }
 
-        int direction = 1;
-        if (GetAction(currentArea, nextArea, nextNextArea) == Action.TURN_LEFT)
+        if (nextNextArea == null)
         {
-            direction = -1;
+            SetCompanionState(2);
+        } else
+        {
+            int direction = 1;
+            if (GetAction(currentArea, nextArea, nextNextArea) == Action.TURN_LEFT)
+            {
+                direction = -1;
+            }
+            SetCompanionState(direction);
         }
-        SetCompanionState(direction);
 
         while (true)
         {
@@ -691,16 +678,20 @@ public class HololensTracker : MonoBehaviour
         Area nextNextArea = (Area)parms[2];
         Vector3 initPos = simManager.Peanut.transform.position;
         Vector3 initRot = simManager.Peanut.transform.rotation.eulerAngles;
-        Vector3 finalPos = AdviceBasePosition(nextArea) + AdvicePositionOffset(currentArea, nextArea, nextNextArea);
-        Vector3 finalRot = AdviceRotation(currentArea, nextArea, nextNextArea);
+        Vector3 finalPos = AdviceBasePosition(nextArea) + AdvicePositionOffset(currentArea, nextArea, nextNextArea, true);
+        Vector3 finalRot = AdviceRotation(currentArea, nextArea, nextNextArea, true);
         int vertexCount = 80;
         Vector3 medRot = new Vector3(initRot.x, initRot.y, initRot.z);
-        switch (GetAction(currentArea, nextArea, nextNextArea))
+        if (nextNextArea != null)
         {
-            case Action.TURN_LEFT: medRot.y -= 90f; break;
-            case Action.TURN_RIGHT: medRot.y += 90f; break;
-            case Action.GO_FORWARD: medRot.y += 180f; break;
+            switch (GetAction(currentArea, nextArea, nextNextArea))
+            {
+                case Action.TURN_LEFT: medRot.y -= 90f; break;
+                case Action.TURN_RIGHT: medRot.y += 90f; break;
+                case Action.GO_FORWARD: medRot.y += 180f; break;
+            }
         }
+
         Quaternion r0 = simManager.Peanut.transform.rotation;
         simManager.Peanut.transform.LookAt(Converter.AreaToVector3(nextArea, simManager.Peanut.transform.position.y));
         Quaternion r1 = simManager.Peanut.transform.rotation;
@@ -736,6 +727,26 @@ public class HololensTracker : MonoBehaviour
 
     private void SetCompanionState(int state)
     {
+        Animator faceAnimator = simManager.Peanut.transform.Find("Armature").Find("Bone").Find("Bone.001").Find("Face").GetComponent<Animator>();
+        if (state == 0)
+        {
+            faceAnimator.SetInteger("State", 0);
+        } else if (state == 2)
+        {
+            faceAnimator.SetInteger("State", 2);
+        } else
+        {
+            int n = 2; // proba = 1/n
+            int r = Random.Range(1, n+1);
+            if (r == n)
+            {
+                faceAnimator.SetInteger("State", 1);
+            } else
+            {
+                faceAnimator.SetInteger("State", 0);
+            }
+        }
+
         simManager.Peanut.GetComponent<Animator>().SetInteger("State", state);
     }
 
@@ -764,12 +775,12 @@ public class HololensTracker : MonoBehaviour
 
     private Vector3 WrongWayAdviceRotation(Area currentArea, Area lastMatchingArea)
     {
-        return AdviceRotation(lastMatchingArea, currentArea, null);
+        return AdviceRotation(lastMatchingArea, currentArea, null, false);
     }
 
     private Vector3 WrongWayAdvicePositionOffset(Area currentArea, Area lastMatchingArea)
     {
-        return AdvicePositionOffset(currentArea, lastMatchingArea, null);
+        return AdvicePositionOffset(currentArea, lastMatchingArea, null, false);
     }
 
     private void AddArrow(Area area, Vector3 position, Vector3 rotation)
@@ -835,7 +846,7 @@ public class HololensTracker : MonoBehaviour
         return (int)d1 + (int)d2 == 0;
     }
 
-    public Vector3 AdviceRotation(Area from, Area at, Area to)
+    public Vector3 AdviceRotation(Area from, Area at, Area to, bool onRightPath)
     {
         Direction d1 = GetDirection(from, at);
         Direction d2;
@@ -845,11 +856,18 @@ public class HololensTracker : MonoBehaviour
         {
             r = simManager.AdviceConfig.AdvicePrefab.transform.rotation.eulerAngles;
             d2 = GetDirection(at, to);
-             action = GetAction(d1, d2);
+            action = GetAction(d1, d2);
         } else
         {
-            r = simManager.AdviceConfig.WrongWayAdvicePrefab.transform.rotation.eulerAngles;
-            action = Action.GO_BACKWARD;
+            if (onRightPath)
+            {
+                r = simManager.AdviceConfig.AdvicePrefab.transform.rotation.eulerAngles;
+                action = Action.GO_FORWARD;
+            } else
+            {
+                r = simManager.AdviceConfig.WrongWayAdvicePrefab.transform.rotation.eulerAngles;
+                action = Action.GO_BACKWARD;
+            }
         }
         if (d1 == Direction.LEFT)
         {
@@ -892,7 +910,7 @@ public class HololensTracker : MonoBehaviour
         return r;
     }
 
-    public Vector3 AdvicePositionOffset(Area from, Area at, Area to)
+    public Vector3 AdvicePositionOffset(Area from, Area at, Area to, bool onRightPath)
     {
         Direction d1 = GetDirection(from, at);
         Direction d2;
@@ -904,7 +922,13 @@ public class HololensTracker : MonoBehaviour
         }
         else
         {
-            action = Action.GO_BACKWARD;
+            if (onRightPath)
+            {
+                action = Action.GO_FORWARD;
+            } else
+            {
+                action = Action.GO_BACKWARD;
+            }
         }
         float baseOffset = simManager.AdviceBaseOffset;
       
