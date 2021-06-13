@@ -114,6 +114,19 @@ public class HololensTracker : MonoBehaviour
 
     public void WriteData()
     {
+        string header = "Simulation time (s);Position vector;;;Euler rotation vector;;;Instant speed (m/s);Mean speed (m/s);Instant acceleration (m/s^2);Distance travelled (m)";
+        string data = simTime + ";"
+                + transform.position.x + ";"
+                + transform.position.y + ";"
+                + transform.position.z + ";"
+                + transform.rotation.eulerAngles.x + ";"
+                + transform.rotation.eulerAngles.y + ";"
+                + transform.rotation.eulerAngles.z + ";"
+                + CurrentSpeed() + ";"
+                + MeanSpeed() + ";"
+                + PreviousAcceleration() + ";"
+                + DistanceTravelled();
+        DataManager.WriteData(simManager.GetNavConfig(), dataFileName, header, data, false);
         /*
         DataManager.WriteDataInFile(dataFileName, simManager.GetNavConfig(), "t = " + simTime + " : pos = " + transform.position + " rot = " + transform.rotation.eulerAngles);
         DataManager.WriteDataInFile(dataFileName, simManager.GetNavConfig(), "      inst_v = " + Converter.Round(CurrentSpeed(), 2) + " prev_inst_a = " + Converter.Round(PreviousAcceleration(), 2));

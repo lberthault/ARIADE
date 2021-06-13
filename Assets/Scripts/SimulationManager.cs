@@ -519,19 +519,19 @@ public class SimulationManager : MonoBehaviour
         string header = "Path;Advice;Simulation time (s);Distance travelled (m);Mean speed (m/s);Number of steps;Mean step frequency (step/s);Percent of left foot in front;Walked path;Number of areas covered;Average time in area (s);Nbr errors; Nbr wrong areas;Total error time (s);Total error distance (m)";
         string data = navConfig.Path.Name + ";"
                 + navConfig.Advice + ";"
-                + SimTime.ToString() + ";"
-                + hololensTracker.DistanceTravelled().ToString() + ";"
-                + hololensTracker.MeanSpeed().ToString() + ";"
-                + feetTracker.StepCount.ToString() + ";"
-                + feetTracker.MeanStepFrequency().ToString() + ";"
-                + feetTracker.LeftFootInFrontRate().ToString() + ";"
-                + hololensTracker.walkedPath.ToString() + ";"
-                + hololensTracker.walkedPath.Count().ToString() + ";"
-                + hololensTracker.AverageTimeInArea().ToString() + ";"
-                + hololensTracker.NumberOfErrors().ToString() + ";"
-                + hololensTracker.TotalWrongAreas().ToString() + ";"
-                + hololensTracker.TotalErrorTime().ToString() + ";"
-                + hololensTracker.TotalErrorDistance().ToString();
+                + SimTime + ";"
+                + hololensTracker.DistanceTravelled() + ";"
+                + hololensTracker.MeanSpeed() + ";"
+                + feetTracker.StepCount + ";"
+                + feetTracker.MeanStepFrequency() + ";"
+                + feetTracker.LeftFootInFrontRate() + ";"
+                + hololensTracker.walkedPath + ";"
+                + hololensTracker.walkedPath.Count() + ";"
+                + hololensTracker.AverageTimeInArea() + ";"
+                + hololensTracker.NumberOfErrors() + ";"
+                + hololensTracker.TotalWrongAreas() + ";"
+                + hololensTracker.TotalErrorTime() + ";"
+                + hololensTracker.TotalErrorDistance();
         DataManager.WriteData(navConfig, dataFileName, header, data, true);
     }
 

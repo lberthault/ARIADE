@@ -113,6 +113,20 @@ public class FootTracker : MonoBehaviour
 
     private void WriteData(float simTime)
     {
+        string header = "Simulation time (s);Position vector;;;Euler rotation vector;;;Mean speed (m/s);Nb Steps;Mean step length (m);Mean step time (s);Mean step pause (s)";
+        string data = simTime + ";"
+                + transform.position.x + ";"
+                + transform.position.y + ";"
+                + transform.position.z + ";"
+                + transform.rotation.eulerAngles.x + ";"
+                + transform.rotation.eulerAngles.y + ";"
+                + transform.rotation.eulerAngles.z + ";"
+                + MeanSpeed() + ";"
+                + StepCount + ";"
+                + TotalMeanStepLength() + ";"
+                + TotalMeanStepTime() + ";"
+                + TotalMeanPause();
+        DataManager.WriteData(simManager.GetNavConfig(), dataFileName, header, data, false);
         /*
         DataManager.WriteDataInFile(dataFileName, simManager.GetNavConfig(), simTime + "=" + VerticalAcceleration(DataCount()-2));
         */
