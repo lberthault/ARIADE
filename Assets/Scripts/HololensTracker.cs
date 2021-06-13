@@ -425,10 +425,9 @@ public class HololensTracker : MonoBehaviour
                         RemoveLastAdvice(lastArea);
                     } else if (simManager.GetAdviceName() == SimulationManager.AdviceName.LIGHT)
                     {
-                        if (removeLightAdvice == 2)
+                        if (removeLightAdvice == 1)
                         {
                             RemoveLastAdvice(lastArea);
-                            removeLightAdvice = 0;
                         } else
                         {
                             removeLightAdvice++;
@@ -540,11 +539,9 @@ public class HololensTracker : MonoBehaviour
                     else if (simManager.GetAdviceName() == SimulationManager.AdviceName.LIGHT)
                     {
                         simManager.RemoveWrongWayLightAdvice();
-                        if (removeLightAdvice == 2)
+                        if (removeLightAdvice == 1)
                         {
-
                             RemoveLastAdvice(lastArea);
-                            removeLightAdvice = 0;
                         }
                         else
                         {
