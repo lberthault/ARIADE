@@ -7,6 +7,8 @@ using UnityEngine;
 public class AreaDetector : MonoBehaviour
 {
 
+    float fadeOutDuration = 1f;
+
     public int line, column;
     public Texture Texture { get; set; }
 
@@ -33,12 +35,63 @@ public class AreaDetector : MonoBehaviour
                 Landmark landmark = renderer.gameObject.GetComponent<Landmark>();
                 if (landmarksToDisplay.Contains(landmark.position))
                 {
-                    ((Renderer)renderer).enabled = true;
-                    ((Renderer)renderer).material.mainTexture = Texture;
-                    SimulationManager.SetObscurable(renderer.gameObject);
+                    if (!((Renderer)renderer).enabled)
+                    {
+                        object[] parms = new object[1] { (Renderer)renderer };
+                        ((Renderer)renderer).material.mainTexture = Texture;
+                        ToFadeMode(((Renderer)renderer).material);
+                        SimulationManager.SetObscurable(renderer.gameObject);
+                        StartCoroutine(nameof(FadeIn), parms);
+                    }
                 }
             }
         }
+    }
+
+    public void ToFadeMode(Material material)
+    {
+        material.SetOverrideTag("RenderType", "Fade");
+        material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        material.SetInt("_ZWrite", 0);
+        material.DisableKeyword("_ALPHATEST_ON");
+        material.EnableKeyword("_ALPHABLEND_ON");
+        material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+        material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+    }
+
+    private IEnumerator FadeIn(object[] parms)
+    {
+        Renderer renderer = (Renderer)parms[0];
+        renderer.enabled = true;
+        Color color = renderer.material.color;
+        float alpha = 0f;
+        float alphaIncrement = 0.01f;
+        while (alpha < 1)
+        {
+            Color newColor = new Color(color.r, color.g, color.b, alpha);
+            alpha += alphaIncrement;
+            renderer.material.SetColor("_Color", newColor);
+            yield return new WaitForSeconds(alphaIncrement * fadeOutDuration);
+        }
+        yield return null;
+    }
+
+    private IEnumerator FadeOut(object[] parms)
+    {
+        Renderer renderer = (Renderer)parms[0];
+        Color color = renderer.material.color;
+        float alpha = 1f;
+        float alphaDecrement = 0.01f;
+        while (alpha > 0)
+        {
+            Color newColor = new Color(color.r, color.g, color.b, alpha);
+            alpha -= alphaDecrement;
+            renderer.material.SetColor("_Color", newColor);
+            yield return new WaitForSeconds(alphaDecrement * fadeOutDuration);
+        }
+        renderer.enabled = false;
+        yield return null;
     }
 
     public void RemoveLandmarks(bool checkBigArea)
@@ -54,7 +107,11 @@ public class AreaDetector : MonoBehaviour
         Component[] renderers = GetComponentsInChildren(typeof(Renderer));
         foreach (Component renderer in renderers)
         {
-                ((Renderer)renderer).enabled = false;           
+            if (((Renderer)renderer).enabled)
+            {
+                object[] parms = new object[1] { (Renderer)renderer };
+                StartCoroutine(nameof(FadeOut), parms);
+            }
         }
     }
 

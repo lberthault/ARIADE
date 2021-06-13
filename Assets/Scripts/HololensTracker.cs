@@ -356,7 +356,7 @@ public class HololensTracker : MonoBehaviour
             }
 
             // Update landmarks
-            if (lastArea != null)
+            if (lastArea != null && !(area.InBigArea() && lastArea.InBigArea()))
             {
                 lastArea.GetAreaDetector().RemoveLandmarks(true);
                 AreaDetector areaDetector = area.GetAreaDetector();
