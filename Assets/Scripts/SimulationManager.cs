@@ -224,8 +224,8 @@ public class SimulationManager : MonoBehaviour
             }
             else
             {
-                //InitQTMServer();
-                //StartCoroutine(nameof(CheckQTMConnection));
+                InitQTMServer();
+                StartCoroutine(nameof(CheckQTMConnection));
             }
             hololensTracker.InitAdvice();
           
@@ -257,7 +257,10 @@ public class SimulationManager : MonoBehaviour
             }
         }
 
-        Camera.main.GetComponent<TrackedPoseDriver>().enabled = false;
+        if (Camera.main.TryGetComponent(out TrackedPoseDriver poseDriver))
+        {
+            poseDriver.enabled = false;
+        }
     }
 
     private void DisableAreaDetection(Area area)
