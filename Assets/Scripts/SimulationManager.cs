@@ -12,8 +12,7 @@ using UnityEngine.SpatialTracking;
 public class SimulationManager : MonoBehaviour
 {
 
-
-    // Simulation
+    #region Simulation
     public float SimTime { get; set; }
     private NavConfig navConfig;
     [SerializeField]
@@ -26,9 +25,9 @@ public class SimulationManager : MonoBehaviour
     public const int TRIAL_NOT_STARTED = 0;
     public const int TRIAL_ONGOING = 1;
     public const int TRIAL_ENDED = 2;
+    #endregion
 
-    // Debug
-
+    #region Debug
     public enum Mode
     {
         XP,
@@ -38,6 +37,8 @@ public class SimulationManager : MonoBehaviour
     [SerializeField]
     public bool drawLines, setOcclusion, manualController, drawGUI;
     public Mode mode;
+    [SerializeField]
+    private List<GameObject> debugObjects;
     [SerializeField]
     private List<GameObject> invisibleObjects;
     [SerializeField]
@@ -54,8 +55,9 @@ public class SimulationManager : MonoBehaviour
     private float debugMovementSpeed;
     [SerializeField]
     private float debugMouseSensitivity;
+    #endregion
 
-    // Path
+    #region Path
     public enum PathName
     {
         A,
@@ -73,7 +75,9 @@ public class SimulationManager : MonoBehaviour
     public Path trialPath;
     public Path remainingPath;
 
-    // Advice
+    #endregion
+
+    #region Advice
     public enum AdviceName
     {
         ARROW,
@@ -88,6 +92,8 @@ public class SimulationManager : MonoBehaviour
         LIGHT,
         PEANUT
     }
+
+    public float landmarkFadeOutDuration = 0.6f;
 
     [SerializeField]
     private AdviceName advice;
@@ -139,24 +145,29 @@ public class SimulationManager : MonoBehaviour
     private float lightPathWidth = 0.08f;
     [SerializeField]
     private int lightPathCurveSegments = 100;
+    public GameObject Peanut { get; set; }
+    #endregion
 
-    // Data
+    #region Data
     private string dataFileName = "SimulationData";
+    #endregion
 
-    // GUI
+    #region GUI
     [SerializeField]
     private GameObject canvasGUI;
     [SerializeField]
     private GameObject participantGUI, pathGUI, adviceGUI, timeGUI, dataGUI, qualisysGUI, modeGUI, trialStateGUI;
     private TextMeshProUGUI participantText, pathText, adviceText, timeText, dataText, qualisysText, modeText, trialStateText;
+    #endregion
 
-    // QTM
+    #region QTM
     public float qtmPeriod = 0.1f;
     RTClient client;
     DiscoveryResponse? dr;
     private bool connectedToQTM;
+    #endregion
 
-    // Tracking
+    #region Tracking
     public float trackingPeriod = 0.01f;
     private bool isTracking = false;
 
@@ -166,13 +177,13 @@ public class SimulationManager : MonoBehaviour
     [SerializeField]
     private GameObject hololens;
     private HololensTracker hololensTracker;
+    #endregion
 
-    // Area detector
+    #region AreaDetector
     [SerializeField]
     private GameObject areaDetectorPrefab;
     public float AreaDetectorSize { get; set; }
-
-    public GameObject Peanut { get; set; }
+    #endregion
 
     void Start()
     {
@@ -191,6 +202,11 @@ public class SimulationManager : MonoBehaviour
         
         SetTrialState(TRIAL_NOT_STARTED);
 
+        foreach (GameObject o in debugObjects)
+        {
+            o.SetActive(mode == Mode.TEST);
+        }
+
         if (mode == Mode.XP)
         {
             foreach (GameObject o in invisibleObjects)
@@ -198,7 +214,8 @@ public class SimulationManager : MonoBehaviour
                 o.SetActive(false);
                 SetObscurable(o);
             }
-        } else
+        }
+        else
         {
             if (setOcclusion)
             {
@@ -211,25 +228,25 @@ public class SimulationManager : MonoBehaviour
                     SetObscurable(o);
                 }
             }
-            if (drawLines)
-            {
-                DrawTrialPath();
-            }
-            canvasGUI.SetActive(drawGUI);
-            if (manualController)
-            {
-                HololensController hc = hololens.AddComponent<HololensController>();
-                hc.movementSpeed = debugMovementSpeed;
-                hc.mouseSensitivity = debugMouseSensitivity;
-            }
-            else
-            {
-                InitQTMServer();
-                StartCoroutine(nameof(CheckQTMConnection));
-            }
-            hololensTracker.InitAdvice();
-          
         }
+        if (drawLines)
+        {
+            DrawTrialPath();
+        }
+        canvasGUI.SetActive(drawGUI);
+        if (manualController)
+        {
+            HololensController hc = hololens.AddComponent<HololensController>();
+            hc.movementSpeed = debugMovementSpeed;
+            hc.mouseSensitivity = debugMouseSensitivity;
+        }
+        else
+        {
+            InitQTMServer();
+            StartCoroutine(nameof(CheckQTMConnection));
+        }
+        hololensTracker.InitAdvice();
+          
        
         string prefix = "Assets/Landmarks/" + pathName + "/";
         string suffix = ".png";

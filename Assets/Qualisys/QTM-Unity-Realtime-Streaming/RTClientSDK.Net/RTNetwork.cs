@@ -67,28 +67,36 @@ namespace QTMRealTimeSDK.Network
 
                 return false;
             }
-            
+
             return true;
         }
 
         /// <summary>
-        /// Closes all sockets(command(TCP), stream(UDP) and broadcast(UDP)).
+        /// Closes selected sockets(command(TCP), stream(UDP) and broadcast(UDP)). All sockets closed by default.
         /// </summary>
-        internal void Disconnect()
+        internal void Disconnect(bool tcp = true, bool udp = true, bool udpBroadcast = true)
         {
-            if (mTCPClient != null)
+            if (tcp && mTCPClient != null)
             {
+                if (mTCPClient.Client != null)
+                {
+                    // If this is not checked, I keep getting a "The socket is not connected" exception
+                    if (mTCPClient.Client.Connected)
+                    {
+                        mTCPClient.Client.Shutdown(SocketShutdown.Send);
+                    }
+                }
                 mTCPClient.Close();
                 mTCPClient = null;
             }
 
-            if (mUDPClient != null)
+            if (udp && mUDPClient != null)
             {
                 mUDPClient.Close();
                 mUDPClient = null;
             }
 
-            if (mUDPBroadcastClient != null)
+            if (udpBroadcast && mUDPBroadcastClient != null)
             {
                 mUDPBroadcastClient.Close();
                 mUDPBroadcastClient = null;
@@ -128,9 +136,7 @@ namespace QTMRealTimeSDK.Network
                 {
                     mUDPClient = tempSocket;
                 }
-
                 return true;
-                
             }
             else
             {
@@ -175,6 +181,7 @@ namespace QTMRealTimeSDK.Network
             }
             return -1;
         }
+
         internal int Receive(ref byte[] receivebuffer, int offset, int bufferSize, bool header, int timeout)
         {
             try
@@ -245,21 +252,21 @@ namespace QTMRealTimeSDK.Network
             {
                 sentData += mTCPClient.Client.Send(sendBuffer);
             }
-            catch(SocketException e)
+            catch (SocketException e)
             {
                 mErrorString = e.Message;
                 mSocketError = e.SocketErrorCode;
                 return false;
             }
-            
+
             return true;
         }
 
         /// <summary>
-        /// Try and get all the local ip adresses
+        /// Try and get all the local IP addresses
         /// </summary>
         /// <returns></returns>
-        private List<IPAddress> GetLocalIPAddresses()
+        private static List<IPAddress> GetLocalIPAddresses()
         {
             try
             {
@@ -331,7 +338,7 @@ namespace QTMRealTimeSDK.Network
                         }
                         catch (Exception)
                         {
-                            // Ignore broadcast failure, since we might have more ips to send to
+                            // Ignore broadcast failure, since we might have more IPs to send to
                         }
 
                     }
@@ -353,7 +360,7 @@ namespace QTMRealTimeSDK.Network
                         }
                         catch (Exception)
                         {
-                            // Ignore broadcast failure, since we might have more ips to send to
+                            // Ignore broadcast failure, since we might have more IPs to send to
                         }
                     }
                 }
@@ -371,7 +378,6 @@ namespace QTMRealTimeSDK.Network
             }
             return true;
         }
-
         /// <summary>
         /// Error string related to errors that could have occurred during execution of commands
         /// </summary>

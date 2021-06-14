@@ -65,30 +65,32 @@ namespace QTMRealTimeSDK.Data
         ComponentTimecode = 17,
         // Skeleton component
         ComponentSkeleton = 18,
+        // Eye tracker component
+        ComponentEyeTracker = 19,
         // Nothing
-        ComponentNone = 19,
+        ComponentNone = 20,
     }
 
     /// <summary>Events sent from QTM via RT</summary>
     public enum QTMEvent
     {
-        EventConnected = 1,
-        EventConnectionClosed,
-        EventCaptureStarted,
-        EventCaptureStopped,
-        EventCaptureFetchingFinished,
-        EventCalibrationStarted,
-        EventCalibrationStopped,
-        EventRTFromFileStarted,
-        EventRTFromFileStopped,
-        EventWaitingForTrigger,
-        EventCameraSettingsChanged,
-        EventQTMShuttingDown,
-        EventCaptureSaved,
-        EventReprocessingStarted,
-        EventReprocessingStopped,
-        EventTrigger,
-        EventNone
+        Connected = 1,
+        ConnectionClosed,
+        CaptureStarted,
+        CaptureStopped,
+        CaptureFetchingFinished,
+        CalibrationStarted,
+        CalibrationStopped,
+        RTFromFileStarted,
+        RTFromFileStopped,
+        WaitingForTrigger,
+        CameraSettingsChanged,
+        QTMShuttingDown,
+        CaptureSaved,
+        ReprocessingStarted,
+        ReprocessingStopped,
+        Trigger,
+        None
     }
 
     // <summary>Timecode types available from QTM</summary>
@@ -124,16 +126,16 @@ namespace QTMRealTimeSDK.Data
         [XmlElement("Z")]
         public float Z;
     }
-    /// <summary>Struct for quaternion</summary>
-    public struct QuaternionRotation
+    /// <summary>Struct for quaterinion </summary>
+    public struct QuatRotation
     {
-        [XmlElement("X")]
+        [XmlElement("A")]
         public float X;
-        [XmlElement("Y")]
+        [XmlElement("B")]
         public float Y;
-        [XmlElement("Z")]
+        [XmlElement("C")]
         public float Z;
-        [XmlElement("W")]
+        [XmlElement("D")]
         public float W;
     }
 
@@ -264,12 +266,35 @@ namespace QTMRealTimeSDK.Data
     /// <summary>Data for Gaze vector.</summary>
     public struct GazeVector
     {
+        /// <summary>Sample number</summary>
+        public uint SampleNumber;
+        /// <summary>Gaze vector data array</summary>
+        public GazeVectorSample[] GazeVectorData;
+    }
+    public struct GazeVectorSample
+    {
         /// <summary>Gaze vector</summary>
         public Point Gaze;
         /// <summary>Gaze vector position</summary>
         public Point Position;
+    }
+
+    /// <summary>Data for Eye tracker.</summary>
+    public struct EyeTracker
+    {
         /// <summary>Sample number</summary>
         public uint SampleNumber;
+        /// <summary>Eye tracker data array</summary>
+        public EyeTrackerSample[] EyeTrackerData;
+    }
+
+    /// <summary>Data for Eye tracker.</summary>
+    public struct EyeTrackerSample
+    {
+        /// <summary>Left Pupil Position</summary>
+        public float LeftPupilDiameter;
+        /// <summary>Right Pupil Position</summary>
+        public float RightPupilDiameter;
     }
 
     /// <summary>Data for Timecode.</summary>
@@ -308,26 +333,24 @@ namespace QTMRealTimeSDK.Data
         public uint Frame;
     }
 
-    /// <summary>Data for Skeleton Segment</summary>
-    public struct SegmentData
+    /// <summary>Data for Skeleton segment</summary>
+    public struct SkeletonSegment
     {
         /// <summary>ID</summary>
-        public uint Id;
+        public uint ID;
         /// <summary>Skeleton position</summary>
         public Point Position;
         /// <summary>Skeleton rotation</summary>
-        public QuaternionRotation Rotation;
+        public QuatRotation Rotation;
     }
     /// <summary>Data for Skeleton</summary>
-    public struct SkeletonData
+    public struct Skeleton
     {
         // <summary>Segment data</summary>
-        public List<SegmentData> SegmentDataList;
+        public List<SkeletonSegment> Segments;
         /// <summary>Sample number</summary>
         public uint SampleNumber;
-        /// <summary>ID</summary>
-        public uint Id;
-        /// <summary>Number of Segments</summary>
+        /// <summary>Number of segments</summary>
         public uint SegmentCount;
     }
 
@@ -395,8 +418,9 @@ namespace QTMRealTimeSDK.Data
         List<ForcePlate> mForceSinglePlateData;
         List<CameraImage> mImageData;
         List<GazeVector> mGazeVectorData;
+        List<EyeTracker> mEyeTrackerData;
         List<Timecode> mTimecodeData;
-        List<SkeletonData> mSkeletonData;
+        List<Skeleton> mSkeletonData;
 
 
         /// <summary>
@@ -439,9 +463,10 @@ namespace QTMRealTimeSDK.Data
 
             mImageData = new List<CameraImage>();
             mGazeVectorData = new List<GazeVector>();
+            mEyeTrackerData = new List<EyeTracker>();
 
             mTimecodeData = new List<Timecode>();
-            mSkeletonData = new List<SkeletonData>();
+            mSkeletonData = new List<Skeleton>();
 
             ClearData();
         }
@@ -485,6 +510,7 @@ namespace QTMRealTimeSDK.Data
             mForceSinglePlateData.Clear();
             mImageData.Clear();
             mGazeVectorData.Clear();
+            mEyeTrackerData.Clear();
             mTimecodeData.Clear();
             mSkeletonData.Clear();
         }
@@ -579,13 +605,13 @@ namespace QTMRealTimeSDK.Data
                         else if (componentType == ComponentType.ComponentAnalog)
                         {
                             /* Analog Device count - 4 bytes
-                            * [Repeated per device]
-                            *   Device id - 4 bytes
-                            *   Channel count - 4 bytes
-                            *   Sample count - 4 bytes
-                            *   Sample number - 4 bytes
-                            *   Analog data - 4 * channelcount * sampleCount
-                            */
+                             * [Repeated per device]
+                             *   Device id - 4 bytes
+                             *   Channel count - 4 bytes
+                             *   Sample count - 4 bytes
+                             *   Sample number - 4 bytes
+                             *   Analog data - 4 * channelcount * sampleCount
+                             */
                             uint deviceCount = BitConvert.GetUInt32(mData, ref position);
                             for (int i = 0; i < deviceCount; i++)
                             {
@@ -593,23 +619,30 @@ namespace QTMRealTimeSDK.Data
                                 analogDeviceData.DeviceID = BitConvert.GetUInt32(mData, ref position);
                                 analogDeviceData.ChannelCount = BitConvert.GetUInt32(mData, ref position);
                                 analogDeviceData.Channels = new AnalogChannelData[analogDeviceData.ChannelCount];
-
                                 uint sampleCount = BitConvert.GetUInt32(mData, ref position);
                                 analogDeviceData.SampleNumber = BitConvert.GetUInt32(mData, ref position);
                                 if (sampleCount > 0)
                                 {
-                                    
                                     for (uint j = 0; j < analogDeviceData.ChannelCount; j++)
                                     {
-                                        AnalogChannelData sample = new AnalogChannelData();
-                                        sample.Samples = new float[sampleCount];
+                                        AnalogChannelData analogChannelData = new AnalogChannelData();
+                                        analogChannelData.Samples = new float[sampleCount];
                                         for (uint k = 0; k < sampleCount; k++)
                                         {
-                                            sample.SampleNumber = analogDeviceData.SampleNumber + k;
-                                            sample.Samples[k] = BitConvert.GetFloat(mData, ref position);
+                                            analogChannelData.SampleNumber = analogDeviceData.SampleNumber + k;
+                                            analogChannelData.Samples[k] = BitConvert.GetFloat(mData, ref position);
                                         }
-
-                                        analogDeviceData.Channels[j] = sample;
+                                        analogDeviceData.Channels[j] = analogChannelData;
+                                    }
+                                }
+                                else
+                                {
+                                    for (uint j = 0; j < analogDeviceData.ChannelCount; j++)
+                                    {
+                                        AnalogChannelData analogChannelData = new AnalogChannelData();
+                                        analogChannelData.Samples = new float[0];
+                                        analogChannelData.SampleNumber = 0;
+                                        analogDeviceData.Channels[j] = analogChannelData;
                                     }
                                 }
                                 mAnalogData.Add(analogDeviceData);
@@ -774,14 +807,14 @@ namespace QTMRealTimeSDK.Data
                         else if (componentType == ComponentType.Component3dNoLabelsResidual)
                         {
                             /* Marker count - 4 bytes
-                                * 2D Drop rate - 2 bytes
-                                * 2D Out of sync rate - 2 bytes
-                                * [Repeated per marker]
-                                *   X - 4 bytes
-                                *   Y - 4 bytes
-                                *   Z - 4 bytes
-                                *   ID - 4 bytes
-                                *   Residual - 4 bytes
+                            * 2D Drop rate - 2 bytes
+                            * 2D Out of sync rate - 2 bytes
+                            * [Repeated per marker]
+                            *   X - 4 bytes
+                            *   Y - 4 bytes
+                            *   Z - 4 bytes
+                            *   ID - 4 bytes
+                            *   Residual - 4 bytes
                             */
                             int markerCount = BitConvert.GetInt32(mData, ref position);
                             m2DDropRate = BitConvert.GetUShort(mData, ref position);
@@ -980,13 +1013,42 @@ namespace QTMRealTimeSDK.Data
                                 {
                                     uint sampleNumber = BitConvert.GetUInt32(mData, ref position);
                                     gazeVector.SampleNumber = sampleNumber;
+                                    gazeVector.GazeVectorData = new GazeVectorSample[sampleCount];
                                     for (var sample = 0; sample < sampleCount; sample++)
                                     {
-                                        gazeVector.Gaze = BitConvert.GetPoint(mData, ref position);
-                                        gazeVector.Position = BitConvert.GetPoint(mData, ref position);
+                                        gazeVector.GazeVectorData[sample].Gaze = BitConvert.GetPoint(mData, ref position);
+                                        gazeVector.GazeVectorData[sample].Position = BitConvert.GetPoint(mData, ref position);
                                     }
                                 }
                                 mGazeVectorData.Add(gazeVector);
+                            }
+                        }
+                        else if (componentType == ComponentType.ComponentEyeTracker)
+                        {
+                            /* Eye tracker count - 4 bytes
+                            * Eye tracker sample count - 4 bytes
+                            * Eye tracker sample number - 4 bytes (omitted if sample count is 0)
+                            * [Repeated per eye tracker (omitted if sample count is 0)]
+                            * Eye tracker data - 8 bytes
+                            */
+
+                            int eyeTrackerCount = BitConvert.GetInt32(mData, ref position);
+                            for (int i = 0; i < eyeTrackerCount; i++)
+                            {
+                                EyeTracker eyeTracker = new EyeTracker();
+                                uint sampleCount = BitConvert.GetUInt32(mData, ref position);
+                                if (sampleCount > 0)
+                                {
+                                    uint sampleNumber = BitConvert.GetUInt32(mData, ref position);
+                                    eyeTracker.SampleNumber = sampleNumber;
+                                    eyeTracker.EyeTrackerData = new EyeTrackerSample[sampleCount];
+                                    for (var sample = 0; sample < sampleCount; sample++)
+                                    {
+                                        eyeTracker.EyeTrackerData[sample].LeftPupilDiameter = BitConvert.GetFloat(mData, ref position);
+                                        eyeTracker.EyeTrackerData[sample].RightPupilDiameter = BitConvert.GetFloat(mData, ref position);
+                                    }
+                                }
+                                mEyeTrackerData.Add(eyeTracker);
                             }
                         }
                         else if (componentType == ComponentType.ComponentSkeleton)
@@ -994,22 +1056,21 @@ namespace QTMRealTimeSDK.Data
                             int skeletonCount = BitConvert.GetInt32(mData, ref position);
                             for (int i = 0; i < skeletonCount; i++)
                             {
-                                SkeletonData skeleton = new SkeletonData();
+                                Skeleton skeleton = new Skeleton();
 
-                                //skeleton.Id = BitConvert.GetUInt32(mData, ref position);
                                 skeleton.SegmentCount = BitConvert.GetUInt32(mData, ref position);
 
-                                skeleton.SegmentDataList = new List<SegmentData>();
-                                for (int j = 0; j < skeleton.SegmentCount; j++)
+                                skeleton.Segments = new List<SkeletonSegment>();
+                                for (int segment = 0; segment < skeleton.SegmentCount; segment++)
                                 {
-                                    SegmentData segmentData = new SegmentData();
-                                    segmentData.Id = BitConvert.GetUInt32(mData, ref position);
-                                    segmentData.Position = BitConvert.GetPoint(mData, ref position);
-                                    segmentData.Rotation.X = BitConvert.GetFloat(mData, ref position);
-                                    segmentData.Rotation.Y = BitConvert.GetFloat(mData, ref position);
-                                    segmentData.Rotation.Z = BitConvert.GetFloat(mData, ref position);
-                                    segmentData.Rotation.W = BitConvert.GetFloat(mData, ref position);
-                                    skeleton.SegmentDataList.Add(segmentData);
+                                    SkeletonSegment skeletonSegment = new SkeletonSegment();
+                                    skeletonSegment.ID = BitConvert.GetUInt32(mData, ref position);
+                                    skeletonSegment.Position = BitConvert.GetPoint(mData, ref position);
+                                    skeletonSegment.Rotation.X = BitConvert.GetFloat(mData, ref position);
+                                    skeletonSegment.Rotation.Y = BitConvert.GetFloat(mData, ref position);
+                                    skeletonSegment.Rotation.Z = BitConvert.GetFloat(mData, ref position);
+                                    skeletonSegment.Rotation.W = BitConvert.GetFloat(mData, ref position);
+                                    skeleton.Segments.Add(skeletonSegment);
                                 }
                                 mSkeletonData.Add(skeleton);
                             }
@@ -1170,13 +1231,12 @@ namespace QTMRealTimeSDK.Data
             {
                 return (QTMEvent)mData[RTProtocol.Constants.PACKET_HEADER_SIZE];
             }
-            return QTMEvent.EventNone;
+            return QTMEvent.None;
         }
 
         #endregion
 
         #region get functions for streamed data
-
         /// <summary>
         /// Get 2D marker data
         /// </summary>
@@ -1186,6 +1246,22 @@ namespace QTMRealTimeSDK.Data
             lock (packetLock)
             {
                 return m2DMarkerData.ToList();
+            }
+        }
+
+        /// <summary>
+        /// Get 2D marker data
+        /// </summary>
+        public void Get2DMarkerData(List<Camera> output)
+        {
+            output.Clear();
+            lock (packetLock)
+            {
+                int c = m2DMarkerData.Count;
+                for (int i = 0; i < c; ++i)
+                {
+                    output.Add(m2DMarkerData[i]);
+                }
             }
         }
 
@@ -1215,6 +1291,22 @@ namespace QTMRealTimeSDK.Data
         }
 
         /// <summary>
+        /// Get linear 2D marker data
+        /// </summary>
+        public void Get2DLinearizedMarkerData(List<Camera> output)
+        {
+            output.Clear();
+            lock (packetLock)
+            {
+                int c = m2DLinearizedMarkerData.Count;
+                for (int i = 0; i < c; ++i)
+                {
+                    output.Add(m2DLinearizedMarkerData[i]);
+                }
+            }
+        }
+
+        /// <summary>
         /// Get linear 2D marker data at index
         /// </summary>
         /// <param name="index">index to get data from.</param>
@@ -1240,6 +1332,22 @@ namespace QTMRealTimeSDK.Data
         }
 
         /// <summary>
+        /// Get 3D marker data
+        /// </summary>
+        public void Get3DMarkerData(List<Q3D> output)
+        {
+            output.Clear();
+            lock (packetLock)
+            {
+                int c = m3DMarkerData.Count;
+                for (int i = 0; i < c; ++i)
+                {
+                    output.Add(m3DMarkerData[i]);
+                }
+            }
+        }
+
+        /// <summary>
         /// Get 3D marker data at index
         /// </summary>
         /// <param name="index">index to get data from.</param>
@@ -1252,7 +1360,6 @@ namespace QTMRealTimeSDK.Data
             }
         }
 
-
         /// <summary>
         /// Get 3D marker data
         /// </summary>
@@ -1262,6 +1369,22 @@ namespace QTMRealTimeSDK.Data
             lock (packetLock)
             {
                 return m3DMarkerResidualData.ToList();
+            }
+        }
+
+        /// <summary>
+        /// Get 3D marker data
+        /// </summary>
+        public void Get3DMarkerResidualData(List<Q3D> output)
+        {
+            output.Clear();
+            lock (packetLock)
+            {
+                int c = m3DMarkerResidualData.Count;
+                for (int i = 0; i < c; ++i)
+                {
+                    output.Add(m3DMarkerResidualData[i]);
+                }
             }
         }
 
@@ -1303,6 +1426,22 @@ namespace QTMRealTimeSDK.Data
             }
         }
 
+        /// <summary>
+        /// Get unidentified 3D marker data
+        /// </summary>
+        public void Get3DMarkerNoLabelsResidualData(List<Q3D> output)
+        {
+            output.Clear();
+            lock (packetLock)
+            {
+                int c = m3DMarkerNoLabelResidualData.Count;
+                for (int i = 0; i < c; ++i)
+                {
+                    output.Add(m3DMarkerNoLabelResidualData[i]);
+                }
+            }
+        }
+
 
         /// <summary>
         /// Get unidentified 3D marker data at index
@@ -1330,6 +1469,22 @@ namespace QTMRealTimeSDK.Data
         }
 
         /// <summary>
+        /// Get unidentified 3D marker data
+        /// </summary>
+        public void Get3DMarkerNoLabelsData(List<Q3D> output)
+        {
+            output.Clear();
+            lock (packetLock)
+            {
+                int c = m3DMarkerNoLabelData.Count;
+                for (int i = 0; i < c; ++i)
+                {
+                    output.Add(m3DMarkerNoLabelData[i]);
+                }
+            }
+        }
+
+        /// <summary>
         /// Get 6DOF data
         /// </summary>
         /// <returns>List of all 6DOF body data (orientation described with rotation matrix)</returns>
@@ -1338,6 +1493,22 @@ namespace QTMRealTimeSDK.Data
             lock (packetLock)
             {
                 return m6DOFData.ToList();
+            }
+        }
+
+        /// <summary>
+        /// Get 6DOF data
+        /// </summary>
+        public void Get6DOFData(List<Q6DOF> output)
+        {
+            output.Clear();
+            lock (packetLock)
+            {
+                int c = m6DOFData.Count;
+                for (int i = 0; i < c; ++i)
+                {
+                    output.Add(m6DOFData[i]);
+                }
             }
         }
 
@@ -1367,6 +1538,22 @@ namespace QTMRealTimeSDK.Data
         }
 
         /// <summary>
+        /// Get 6DOF data with residual
+        /// </summary>
+        public void Get6DOFResidualData(List<Q6DOF> output)
+        {
+            output.Clear();
+            lock (packetLock)
+            {
+                int c = m6DOFResidualData.Count;
+                for (int i = 0; i < c; ++i)
+                {
+                    output.Add(m6DOFResidualData[i]);
+                }
+            }
+        }
+
+        /// <summary>
         /// Get 6DOF data with residual of body at index
         /// </summary>
         /// <param name="index">index to get data from.</param>
@@ -1388,6 +1575,22 @@ namespace QTMRealTimeSDK.Data
             lock (packetLock)
             {
                 return m6DOFEulerData.ToList();
+            }
+        }
+
+        /// <summary>
+        /// Get 6DOF data
+        /// </summary>
+        public void Get6DOFEulerData(List<Q6DOFEuler> output)
+        {
+            output.Clear();
+            lock (packetLock)
+            {
+                int c = m6DOFEulerData.Count;
+                for (int i = 0; i < c; ++i)
+                {
+                    output.Add(m6DOFEulerData[i]);
+                }
             }
         }
 
@@ -1417,6 +1620,22 @@ namespace QTMRealTimeSDK.Data
         }
 
         /// <summary>
+        /// Get 6DOF euler residual data
+        /// </summary>
+        public void Get6DOFEulerResidualData(List<Q6DOFEuler> output)
+        {
+            output.Clear();
+            lock (packetLock)
+            {
+                int c = m6DOFEulerResidualData.Count;
+                for (int i = 0; i < c; ++i)
+                {
+                    output.Add(m6DOFEulerResidualData[i]);
+                }
+            }
+        }
+
+        /// <summary>
         /// Get 6DOF data of body at index
         /// </summary>
         /// <param name="index">index to get data from.</param>
@@ -1438,6 +1657,22 @@ namespace QTMRealTimeSDK.Data
             lock (packetLock)
             {
                 return mAnalogData.ToList();
+            }
+        }
+
+        /// <summary>
+        /// Get all samples from all analog devices
+        /// </summary>
+        public void GetAnalogData(List<Analog> output)
+        {
+            output.Clear();
+            lock (packetLock)
+            {
+                int c = mAnalogData.Count;
+                for (int i = 0; i < c; ++i)
+                {
+                    output.Add(mAnalogData[i]);
+                }
             }
         }
 
@@ -1467,6 +1702,22 @@ namespace QTMRealTimeSDK.Data
         }
 
         /// <summary>
+        /// Get sample from all analog devices (only one sample per frame)
+        /// </summary>
+        public void GetAnalogSingleData(List<Analog> output)
+        {
+            output.Clear();
+            lock (packetLock)
+            {
+                int c = mAnalogSingleData.Count;
+                for (int i = 0; i < c; ++i)
+                {
+                    output.Add(mAnalogSingleData[i]);
+                }
+            }
+        }
+
+        /// <summary>
         /// Get sample from analog device at index (only one sample per frame)
         /// </summary>
         /// <param name="index">index to get data from.</param>
@@ -1488,6 +1739,22 @@ namespace QTMRealTimeSDK.Data
             lock (packetLock)
             {
                 return mForcePlateData.ToList();
+            }
+        }
+        
+        /// <summary>
+        /// Get samples from all force plates
+        /// </summary>
+        public void GetForceData(List<ForcePlate> output)
+        {
+            output.Clear();
+            lock (packetLock)
+            {
+                int c = mForcePlateData.Count;
+                for (int i = 0; i < c; ++i)
+                {
+                    output.Add(mForcePlateData[i]);
+                }
             }
         }
 
@@ -1517,6 +1784,22 @@ namespace QTMRealTimeSDK.Data
         }
 
         /// <summary>
+        /// Get sample from all analog devices (only one sample per frame)
+        /// </summary>
+        public void GetForceSingleData(List<ForcePlate> output)
+        {
+            output.Clear();
+            lock (packetLock)
+            {
+                int c = mForceSinglePlateData.Count;
+                for (int i = 0; i < c; ++i)
+                {
+                    output.Add(mForceSinglePlateData[i]);
+                }
+            }
+        }
+
+        /// <summary>
         /// Get samples from force plate at index
         /// </summary>
         /// <param name="index">index to get data from.</param>
@@ -1542,6 +1825,22 @@ namespace QTMRealTimeSDK.Data
         }
 
         /// <summary>
+        /// Get images from all cameras
+        /// </summary>
+        public void GetImageData(List<CameraImage> output)
+        {
+            output.Clear();
+            lock (packetLock)
+            {
+                int c = mImageData.Count;
+                for (int i = 0; i < c; ++i)
+                {
+                    output.Add(mImageData[i]);
+                }
+            }
+        }
+
+        /// <summary>
         /// Get image from cameras at index
         /// </summary>
         /// <param name="index">index to get data from.(not camera index!)</param>
@@ -1563,6 +1862,22 @@ namespace QTMRealTimeSDK.Data
             lock (packetLock)
             {
                 return mTimecodeData.ToList();
+            }
+        }
+
+        /// <summary>
+        /// Get timecode information from packet
+        /// </summary>
+        public void GetTimecodeData(List<Timecode> output)
+        {
+            output.Clear();
+            lock (packetLock)
+            {
+                int c = mTimecodeData.Count;
+                for (int i = 0; i < c; ++i)
+                {
+                    output.Add(mTimecodeData[i]);
+                }
             }
         }
 
@@ -1593,9 +1908,9 @@ namespace QTMRealTimeSDK.Data
         }
 
         /// <summary>
-        /// Get gaze vectors from all cameras
+        /// Get all gaze vectors
         /// </summary>
-        /// <returns>list of all images</returns>
+        /// <returns>list of all gaze vectors</returns>
         public List<GazeVector> GetGazeVectorData()
         {
             lock (packetLock)
@@ -1603,8 +1918,26 @@ namespace QTMRealTimeSDK.Data
                 return mGazeVectorData.ToList();
             }
         }
+        
         /// <summary>
-        /// Get gaze vector data from cameras at index
+        /// Get gaze vectors from all cameras
+        /// </summary>
+        /// <returns>list of all images</returns>
+        public void GetGazeVectorData(List<GazeVector> output)
+        {
+            output.Clear();
+            lock (packetLock)
+            {
+                int c = mGazeVectorData.Count;
+                for (int i = 0; i < c; ++i)
+                {
+                    output.Add(mGazeVectorData[i]);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get gaze vector at index
         /// </summary>
         /// <param name="index">index to get data from.(not camera index!)</param>
         /// <returns>Gaze vector from index</returns>
@@ -1617,22 +1950,81 @@ namespace QTMRealTimeSDK.Data
         }
 
         /// <summary>
+        /// Get all eye trackers
+        /// </summary>
+        /// <returns>list of all eye trackers</returns>
+        public List<EyeTracker> GetEyeTrackerData()
+        {
+            lock (packetLock)
+            {
+                return mEyeTrackerData.ToList();
+            }
+        }
+
+        /// <summary>
+        /// Get all eye trackers
+        /// </summary>
+        public void GetEyeTrackerData(List<EyeTracker> output)
+        {
+            output.Clear();
+            lock (packetLock)
+            {
+                int c = mEyeTrackerData.Count;
+                for (int i = 0; i < c; ++i)
+                {
+                    output.Add(mEyeTrackerData[i]);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get eye tracker at index
+        /// </summary>
+        /// <param name="index">index to get data from.(not camera index!)</param>
+        /// <returns>Eye tracker from index</returns>
+        public EyeTracker GetEyeTrackerData(int index)
+        {
+            lock (packetLock)
+            {
+                return mEyeTrackerData[index];
+            }
+        }
+
+        /// <summary>
         /// Get skeleton from all cameras
         /// </summary>
         /// <returns>list of all images</returns>
-        public List<SkeletonData> GetSkeletonData()
+        public List<Skeleton> GetSkeletonData()
         {
             lock (packetLock)
             {
                 return mSkeletonData.ToList();
             }
         }
+
+        /// <summary>
+        /// Get skeleton from all cameras
+        /// </summary>
+        /// <returns>list of all images</returns>
+        public void GetSkeletonData(List<Skeleton> output)
+        {
+            output.Clear();
+            lock (packetLock)
+            {
+                int c = mSkeletonData.Count;
+                for (int i = 0; i < c; ++i)
+                {
+                    output.Add(mSkeletonData[i]);
+                }
+            }
+        }
+
         /// <summary>
         /// Get skeleton data from cameras at index
         /// </summary>
         /// <param name="index">index to get data from.(not camera index!)</param>
         /// <returns>Gaze vector from index</returns>
-        public SkeletonData GetSkeletonData(int index)
+        public Skeleton GetSkeletonData(int index)
         {
             lock (packetLock)
             {

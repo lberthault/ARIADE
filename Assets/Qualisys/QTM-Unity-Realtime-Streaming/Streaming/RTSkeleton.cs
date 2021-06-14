@@ -1,20 +1,21 @@
-﻿// Unity SDK for Qualisys Track Manager. Copyright 2015-2018 Qualisys AB
+﻿// Unity SDK for Qualisys Track Manager. Copyright 2015-2021 Qualisys AB
 //
+
+#define FINGERS
+//#define DEBUG_SKELETON
+
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using QTMRealTimeSDK;
 
 namespace QualisysRealTime.Unity
 {
     public class RTSkeleton : MonoBehaviour
     {
         public string SkeletonName = "Put QTM skeleton name here";
-
-        private Avatar mSourceAvatar;
         public Avatar DestinationAvatar;
 
+        private Avatar mSourceAvatar;
         private HumanPose mHumanPose = new HumanPose();
         private GameObject mStreamedRootObject;
         private Dictionary<uint, GameObject> mQTmSegmentIdToGameObject;
@@ -23,14 +24,13 @@ namespace QualisysRealTime.Unity
         private HumanPoseHandler mSourcePoseHandler;
         private HumanPoseHandler mDestiationPoseHandler;
 
-        protected RTClient rtClient;
         private Skeleton mQtmSkeletonCache;
-
+#if DEBUG_SKELETON
+        private GameObject mDebugSkeletonTPose;
+#endif
         void Update()
         {
-            if (rtClient == null) rtClient = RTClient.GetInstance();
-            
-            var skeleton = rtClient.GetSkeleton(SkeletonName);
+            var skeleton = RTClient.GetInstance().GetSkeleton(SkeletonName);
 
             if (mQtmSkeletonCache != skeleton)
             {
@@ -43,31 +43,40 @@ namespace QualisysRealTime.Unity
 
                 if(mStreamedRootObject != null)
                     GameObject.Destroy(mStreamedRootObject);
-                
                 mStreamedRootObject = new GameObject(this.SkeletonName);
 
+#if DEBUG_SKELETON
+                mStreamedRootObject.AddComponent<DebugHierarchyRotations>().color = Color.yellow;
+#endif
                 mQTmSegmentIdToGameObject = new Dictionary<uint, GameObject>(mQtmSkeletonCache.Segments.Count);
 
-                foreach (var segment in mQtmSkeletonCache.Segments.ToList())
+                foreach (var segment in mQtmSkeletonCache.Segments)
                 {
                     var gameObject = new GameObject(this.SkeletonName + "_" + segment.Value.Name);
                     gameObject.transform.parent = segment.Value.ParentId == 0 ? mStreamedRootObject.transform : mQTmSegmentIdToGameObject[segment.Value.ParentId].transform;
                     gameObject.transform.localPosition = segment.Value.TPosition;
+                    gameObject.transform.localRotation = segment.Value.TRotation;
                     mQTmSegmentIdToGameObject[segment.Value.Id] = gameObject;
                 }
 
+                mStreamedRootObject.transform.SetParent(this.transform, false);
+#if DEBUG_SKELETON
+                if (mDebugSkeletonTPose != null)
+                    GameObject.Destroy(mDebugSkeletonTPose);
+                mDebugSkeletonTPose = GameObject.Instantiate<GameObject>(mStreamedRootObject.gameObject, this.transform, false);
+                mDebugSkeletonTPose.name = this.SkeletonName + "-TPose";
+                mDebugSkeletonTPose.GetComponent<DebugHierarchyRotations>().color = Color.white;
+#endif
                 BuildMecanimAvatarFromQtmTPose();
 
-                mStreamedRootObject.transform.SetParent(this.transform, false);
-                mStreamedRootObject.transform.Rotate(new Vector3(0, 90, 0), Space.Self);
                 return;
             }
 
             if (mQtmSkeletonCache == null)
                 return;
 
-            // Update all the game objects
-            foreach (var segment in mQtmSkeletonCache.Segments.ToList())
+            //Update all the game objects
+            foreach (var segment in mQtmSkeletonCache.Segments)
             {
                 GameObject gameObject;
                 if (mQTmSegmentIdToGameObject.TryGetValue(segment.Key, out gameObject))
@@ -101,18 +110,18 @@ namespace QualisysRealTime.Unity
                 }
             }
 
-            // Set up the T-pose and game object name mappings.
             var skeletonBones = new List<SkeletonBone>(mQtmSkeletonCache.Segments.Count + 1);
             skeletonBones.Add(new SkeletonBone()
             {
                 name = this.SkeletonName,
                 position = Vector3.zero,
-                rotation = Quaternion.identity,
+                // In QTM default poses are facing +Y which becomes -Z in Unity. 
+                // We rotate 180 degrees to match unity forward.
+                rotation = Quaternion.AngleAxis(180, Vector3.up), 
                 scale = Vector3.one,
-            });
+            }); 
 
-            // Create remaining T-Pose bone definitions from Qtm segments
-            foreach (var segment in mQtmSkeletonCache.Segments.ToList())
+            foreach (var segment in mQtmSkeletonCache.Segments)
             {
                 skeletonBones.Add(new SkeletonBone()
                 {
@@ -128,6 +137,7 @@ namespace QualisysRealTime.Unity
                 {
                     human = humanBones.ToArray(),
                     skeleton = skeletonBones.ToArray(),
+                   
                 }
             );
             if (mSourceAvatar.isValid == false || mSourceAvatar.isHuman == false)
@@ -167,7 +177,7 @@ namespace QualisysRealTime.Unity
             mMecanimToQtmSegmentNames.Add("UpperChest", skeletonName + "_Spine2");
             mMecanimToQtmSegmentNames.Add("Neck", skeletonName + "_Neck");
             mMecanimToQtmSegmentNames.Add("Head", skeletonName + "_Head");
-            /*
+#if FINGERS
             mMecanimToQtmSegmentNames.Add("Left Thumb Proximal", skeletonName + "_LeftHandThumb1");
             mMecanimToQtmSegmentNames.Add("Left Thumb Intermediate", skeletonName + "_LeftHandThumb2");
             mMecanimToQtmSegmentNames.Add("Left Thumb Distal", skeletonName + "_LeftHandThumb3");
@@ -199,7 +209,7 @@ namespace QualisysRealTime.Unity
             mMecanimToQtmSegmentNames.Add("Right Little Proximal", skeletonName + "_RightHandPinky1");
             mMecanimToQtmSegmentNames.Add("Right Little Intermediate", skeletonName + "_RightHandPinky2");
             mMecanimToQtmSegmentNames.Add("Right Little Distal", skeletonName + "_RightHandPinky3");
-            */
+#endif
         }
     }
 }

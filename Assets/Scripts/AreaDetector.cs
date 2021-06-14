@@ -7,7 +7,7 @@ using UnityEngine;
 public class AreaDetector : MonoBehaviour
 {
 
-    float fadeOutDuration = 1f;
+    float fadeOutDuration;
 
     public int line, column;
     public Texture Texture { get; set; }
@@ -17,6 +17,10 @@ public class AreaDetector : MonoBehaviour
         get { return new Area(line, column); }
     }
 
+    public void Start()
+    {
+        fadeOutDuration = GameObject.Find("SimulationManager").GetComponent<SimulationManager>().landmarkFadeOutDuration;
+    }
     public void DisplayLandmarks(HololensTracker.Direction from, bool checkBigArea)
     {
         if (Area.InBigArea() && checkBigArea)
