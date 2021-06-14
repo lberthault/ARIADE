@@ -644,6 +644,8 @@ public class SimulationManager : MonoBehaviour
             lightPathLineRenderer.numCornerVertices = 0;
             start = from;
             object[] parms = new object[3] { at, to, toto };
+            StopCoroutine(nameof(DrawPoints0));
+            StopCoroutine(nameof(DrawPoints1));
             StartCoroutine(nameof(DrawPoints0), parms);
             return;
         } else
@@ -654,11 +656,15 @@ public class SimulationManager : MonoBehaviour
             {
                 start = from;
                 object[] parms = new object[3] { at, to, toto };
+                StopCoroutine(nameof(DrawPoints0));
+                StopCoroutine(nameof(DrawPoints1));
                 StartCoroutine(nameof(DrawPoints0), parms);
 
             } else
             {
                 object[] parms = new object[3] { at, to, toto };
+                StopCoroutine(nameof(DrawPoints0));
+                StopCoroutine(nameof(DrawPoints1));
                 StartCoroutine(nameof(DrawPoints1), parms);
             }
 
@@ -683,75 +689,6 @@ public class SimulationManager : MonoBehaviour
         {
             ((Renderer)renderer).material = invisibleMaterial;
         }
-    }
-
-    public void DrawWrongWayLightPath(Area area, Vector3 offset, float rotationY)
-    {
-        if (lightPathWrongWayLineRenderer == null)
-        {
-            GameObject pathLine = new GameObject();
-            pathLine.name = "WrongWayLightPath";
-            lightPathWrongWayLineRenderer = pathLine.AddComponent<LineRenderer>();
-            lightPathWrongWayLineRenderer.material = lightPathWrongWayMaterial;
-            lightPathWrongWayLineRenderer.startColor = Color.red;
-            lightPathWrongWayLineRenderer.endColor = Color.red;
-            lightPathWrongWayLineRenderer.startWidth = 0.08f;
-            lightPathWrongWayLineRenderer.endWidth = 0.08f;
-            lightPathWrongWayLineRenderer.useWorldSpace = false;
-        }
-        lightPathWrongWayLineRenderer.gameObject.transform.eulerAngles = Vector3.zero;
-        lightPathWrongWayLineRenderer.positionCount = lightPathCurveSegments + 1;
-        lightPathWrongWayLineRenderer.gameObject.transform.position = Converter.AreaToVector3(area, 0.2f) + offset;
-        CreatePoints(area, offset, rotationY);
-    }
-   
-    void CreatePoints(Area area, Vector3 offset, float rotationY)
-    {
-        /*
-        float x;
-        float y = 0f;
-        float z;
-
-        float angle = 0f;
-
-        for (int i = 0; i < (segments + 1); i++)
-        {
-            x = Mathf.Sin(Mathf.Deg2Rad * angle) * xradius + xradius;
-            z = Mathf.Cos(Mathf.Deg2Rad * angle) * zradius;
-
-            lightPathWrongWayLineRenderer.SetPosition(i, new Vector3(x, y, z));
-
-            angle += (380f / segments);
-        }
-        lightPathWrongWayLineRenderer.gameObject.transform.Rotate(new Vector3(0, rotationY, 0));
-
-        */
-
-        float crossSize = 0.5f;
-        lightPathWrongWayLineRenderer.positionCount = 5;
-        lightPathWrongWayLineRenderer.SetPosition(0, new Vector3(-1, 0, -1) * crossSize);
-        lightPathWrongWayLineRenderer.SetPosition(1, new Vector3(+1, 0, +1) * crossSize);
-        lightPathWrongWayLineRenderer.SetPosition(2, new Vector3(0, 0, 0) * crossSize);
-        lightPathWrongWayLineRenderer.SetPosition(3, new Vector3(1, 0, -1) * crossSize);
-        lightPathWrongWayLineRenderer.SetPosition(4, new Vector3(-1, 0, 1) * crossSize);
-        lightPathLineRenderer.gameObject.transform.Rotate(new Vector3(0, rotationY, 0));
-
-        /*
-        // Z(X)
-        float a = -3f;
-        float b = 0f;
-        float c = 0f;
-        float x, z;
-        float z0 = 0.5f;
-        z = z0;
-        for (int i = 0; i < (segments + 1); i++)
-        {
-            x = a * z * z - b * z + c;
-
-            lightPathLineRenderer.SetPosition(i, new Vector3(x, 0f, z));
-            z -= 2f * z0 / segments;
-        }
-        lightPathLineRenderer.gameObject.transform.Rotate(new Vector3(0, rotationY, 0));*/
     }
 
     public void RemoveAdviceAtArea(Area area)

@@ -438,9 +438,10 @@ public class HololensTracker : MonoBehaviour
                         RemoveLastAdvice(lastArea);
                     } else if (simManager.GetAdviceName() == SimulationManager.AdviceName.LIGHT)
                     {
+                        simManager.RemoveWrongWayLightAdvice();
                         if (removeLightAdvice == 1)
                         {
-                            RemoveLastAdvice(lastArea);
+                            simManager.RemoveLightAdvice();
                         } else
                         {
                             removeLightAdvice++;
@@ -527,7 +528,7 @@ public class HololensTracker : MonoBehaviour
                     }
                     else if (simManager.GetAdviceName() == SimulationManager.AdviceName.LIGHT)
                     {
-                        removeLightAdvice = 0;
+                        removeLightAdvice = -1;
                         simManager.DrawLightPath(currentArea, NextArea(0), NextArea(1), NextArea(2));
                         // simManager.DrawLightPath(Converter.AreaToVector3(NextArea(0), 0.2f), Converter.AreaToVector3(NextArea(1), 0.2f));
                         position = AdviceBasePosition(currentArea) + WrongWayAdvicePositionOffset(currentArea, NextArea(0));
@@ -554,7 +555,7 @@ public class HololensTracker : MonoBehaviour
                         simManager.RemoveWrongWayLightAdvice();
                         if (removeLightAdvice == 1)
                         {
-                            RemoveLastAdvice(lastArea);
+                            simManager.RemoveLightAdvice();
                         }
                         else
                         {
@@ -564,7 +565,6 @@ public class HololensTracker : MonoBehaviour
 
                     } else
                     {
-
                         simManager.RemoveAdviceAtArea(lastArea);
                         simManager.remainingPath.Pop();
                     }
@@ -765,9 +765,6 @@ public class HololensTracker : MonoBehaviour
         if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW || simManager.GetAdviceName() == SimulationManager.AdviceName.PEANUT)
         {
             simManager.RemoveAdviceAtArea(lastArea);
-        } else if (simManager.GetAdviceName() == SimulationManager.AdviceName.LIGHT)
-        {
-            simManager.RemoveLightAdvice();
         }
     }
 
