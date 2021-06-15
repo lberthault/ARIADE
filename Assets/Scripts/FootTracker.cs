@@ -8,6 +8,8 @@ using UnityEngine;
 public class FootTracker : MonoBehaviour
 {
 
+    public GameObject footObj;
+
     public const int NO_CHANGE = 0;
     public const int STEP_START = 1;
     public const int STEP_END = 2;
@@ -92,6 +94,8 @@ public class FootTracker : MonoBehaviour
 
     private void Update()
     {
+        transform.position = new Vector3(-footObj.transform.position.x, footObj.transform.position.y, -footObj.transform.position.z);
+        transform.rotation = Quaternion.Euler(-footObj.transform.rotation.eulerAngles.x, footObj.transform.rotation.eulerAngles.y, -footObj.transform.rotation.eulerAngles.z);
         if (Vector3.Distance(transform.position, lastPosition) > bigJumpThreshold)
         {
             if (trailRenderer != null) trailRenderer.Clear();

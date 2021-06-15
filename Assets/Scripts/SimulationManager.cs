@@ -63,15 +63,16 @@ public class SimulationManager : MonoBehaviour
         A,
         B,
         C,
-        T
+        T,
+        M
     }
     public static Path pathA = new Path("A16.15.25.24.33.43.42.32.22.21.20");
     public static Path pathB = new Path("B01.11.12.13.23.33.32.42.43.44.54");
     public static Path pathC = new Path("C55.45.35.34.23.13.12.11.21.31.30");
-    public static Path pathT = new Path("T51.41.42.52");
+    public static Path pathT = new Path("T55.45.44.43.53");
+    public static Path pathM = new Path("M46.45.44.43.42.41.40");
 
-    [SerializeField]
-    private PathName pathName;
+    public PathName pathName;
     public Path trialPath;
     public Path remainingPath;
 
@@ -211,7 +212,10 @@ public class SimulationManager : MonoBehaviour
         {
             foreach (GameObject o in invisibleObjects)
             {
-                o.SetActive(false);
+                SetInvisible(o);
+            }
+            foreach (GameObject o in obscurableObjects)
+            {
                 SetObscurable(o);
             }
         }
@@ -245,7 +249,10 @@ public class SimulationManager : MonoBehaviour
             InitQTMServer();
             StartCoroutine(nameof(CheckQTMConnection));
         }
-        hololensTracker.InitAdvice();
+        if (pathName != PathName.M)
+        {
+            hololensTracker.InitAdvice();
+        }
           
        
         string prefix = "Assets/Landmarks/" + pathName + "/";
@@ -309,14 +316,14 @@ public class SimulationManager : MonoBehaviour
         float rX = 0f;
         ARROW_AIR = new AdviceConfig(arrowPrefab, arrowWrongWayPrefab, h, c, rY, rX);
 
-        h = 0.15f;
+        h = 0.4f;
         c = 0.2f;
         rY = new List<float>() { -90f, +90f, +180f, -90f, +90f, +0f, +180f };
         rX = 90f;
         ARROW_GROUND = new AdviceConfig(arrowPrefab, arrowWrongWayPrefab, h, c, rY, rX);
 
-        h = 0.3f;
-        c = 0.2f;
+        h = 0.4f;
+        c = 0f;
         rY = new List<float>() { -90f, +90f, +180f, -90f, +90f, +30f, +180f };
         rX = 0f;
         LIGHT = new AdviceConfig(null, lightWrongWayPrefab, h, c, rY, rX);
@@ -337,6 +344,7 @@ public class SimulationManager : MonoBehaviour
             case PathName.B: trialPath = pathB; break;
             case PathName.C: trialPath = pathC; break;
             case PathName.T: trialPath = pathT; break;
+            case PathName.M: trialPath = pathM; break;
         }
         navConfig = new NavConfig(participantName, trialPath, advice);
         client = RTClient.GetInstance();
@@ -624,8 +632,9 @@ public class SimulationManager : MonoBehaviour
     }
     public void DrawLightPath(Area fromArea, Area atArea, Area toArea, Area totoArea)
     {
-        Vector3 from = Converter.AreaToVector3(fromArea, 0.2f);
-        Vector3 at = Converter.AreaToVector3(atArea, 0.2f);
+        float h = AdviceConfig.AdviceBaseHeight;
+        Vector3 from = Converter.AreaToVector3(fromArea, h);
+        Vector3 at = Converter.AreaToVector3(atArea, h);
         Vector3 to;
         Vector3 toto;
         if (toArea == null)
@@ -633,7 +642,7 @@ public class SimulationManager : MonoBehaviour
             to = at;
         } else
         {
-            to = Converter.AreaToVector3(toArea, 0.2f);
+            to = Converter.AreaToVector3(toArea, h);
         }
 
         if (totoArea == null)
@@ -641,7 +650,7 @@ public class SimulationManager : MonoBehaviour
             toto = to;
         } else
         {
-            toto = Converter.AreaToVector3(totoArea, 0.2f);
+            toto = Converter.AreaToVector3(totoArea, h);
         }
 
         if (lightPathLineRenderer == null)

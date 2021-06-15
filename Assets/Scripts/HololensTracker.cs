@@ -7,7 +7,7 @@ using Random = UnityEngine.Random;
 
 public class HololensTracker : MonoBehaviour
 {
-
+    public GameObject HMD;
     public enum Direction
     {
         LEFT = -1,
@@ -67,6 +67,8 @@ public class HololensTracker : MonoBehaviour
 
     private void Update()
     {
+        transform.position = new Vector3(-HMD.transform.position.x, HMD.transform.position.y, -HMD.transform.position.z);
+        transform.rotation = Quaternion.Euler(-HMD.transform.rotation.eulerAngles.x, HMD.transform.rotation.eulerAngles.y, -HMD.transform.rotation.eulerAngles.z);
         if (Vector3.Distance(transform.position, lastPosition) > bigJumpThreshold)
         {
             if (trailRenderer != null) trailRenderer.Clear();
@@ -354,10 +356,10 @@ public class HololensTracker : MonoBehaviour
         return simManager.remainingPath.Get(i);
     }
 
-    public int removeLightAdvice = 0;
+    public int removeLightAdvice = -1;
     private void EnteringArea(Area area)
     {
-        if (currentArea == null)
+        if (currentArea == null && simManager.pathName != SimulationManager.PathName.M)
         {
           
             Area lastArea = walkedPath.GetLast();
@@ -909,9 +911,13 @@ public class HololensTracker : MonoBehaviour
             if (Mathf.Abs(at.line - to.line) + Mathf.Abs(at.column - to.column) == 2)
             {
                 if (at.Equals(new Area(3, 3)) || at.Equals(new Area(2, 4)))
+                {
                     r.y += 45f;
-                if (at.Equals(new Area(2, 3)) || at.Equals(new Area(3, 3)))
+                }
+                if (at.Equals(new Area(2, 3)) || at.Equals(new Area(3, 4)))
+                {
                     r.y -= 45f;
+                }
             }
         }
         return r;
@@ -940,16 +946,20 @@ public class HololensTracker : MonoBehaviour
         float baseOffset = simManager.AdviceBaseOffset;
       
         Vector3 offset = Vector3.zero;
+
+        int eps = (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW) ? 0 : 1;
+
         if (action == Action.GO_FORWARD)
         {
             switch (d1)
             {
-                case Direction.UP: offset += new Vector3(1, 0, 1) * baseOffset; break;
-                case Direction.DOWN: offset += new Vector3(-1, 0, -1) * baseOffset; break;
-                case Direction.LEFT: offset += new Vector3(-1, 0, 1) * baseOffset; break;
-                case Direction.RIGHT: offset += new Vector3(1, 0, -1) * baseOffset; break;
+                case Direction.UP: offset += new Vector3(1, 0, eps) * baseOffset; break;
+                case Direction.DOWN: offset += new Vector3(-1, 0, -eps) * baseOffset; break;
+                case Direction.LEFT: offset += new Vector3(-eps, 0, 1) * baseOffset; break;
+                case Direction.RIGHT: offset += new Vector3(eps, 0, -1) * baseOffset; break;
             }
-        } else if (action == Action.GO_BACKWARD)
+        }
+        else if (action == Action.GO_BACKWARD)
         {
             switch (d1)
             {
@@ -958,23 +968,25 @@ public class HololensTracker : MonoBehaviour
                 case Direction.LEFT: offset += new Vector3(0, 0, -1) * baseOffset; break;
                 case Direction.RIGHT: offset += new Vector3(0, 0, 1) * baseOffset; break;
             }
-        } else if (action == Action.TURN_LEFT)
+        }
+        else if (action == Action.TURN_LEFT)
         {
             switch (d1)
             {
-                case Direction.UP: offset += new Vector3(1, 0, 1) * baseOffset; break;
-                case Direction.DOWN: offset += new Vector3(-1, 0, -1) * baseOffset; break;
-                case Direction.LEFT: offset += new Vector3(-1, 0, 1) * baseOffset; break;
-                case Direction.RIGHT: offset += new Vector3(1, 0, -1) * baseOffset; break;
+                case Direction.UP: offset += new Vector3(eps, 0, 1) * baseOffset; break;
+                case Direction.DOWN: offset += new Vector3(-eps, 0, -1) * baseOffset; break;
+                case Direction.LEFT: offset += new Vector3(-1, 0, eps) * baseOffset; break;
+                case Direction.RIGHT: offset += new Vector3(1, 0, -eps) * baseOffset; break;
             }
-        } else if (action == Action.TURN_RIGHT)
+        }
+        else if (action == Action.TURN_RIGHT)
         {
             switch (d1)
             {
-                case Direction.UP: offset += new Vector3(1, 0, -1) * baseOffset; break;
-                case Direction.DOWN: offset += new Vector3(-1, 0, 1) * baseOffset; break;
-                case Direction.LEFT: offset += new Vector3(1, 0, 1) * baseOffset; break;
-                case Direction.RIGHT: offset += new Vector3(-1, 0, -1) * baseOffset; break;
+                case Direction.UP: offset += new Vector3(eps, 0, -1) * baseOffset; break;
+                case Direction.DOWN: offset += new Vector3(-eps, 0, 1) * baseOffset; break;
+                case Direction.LEFT: offset += new Vector3(1, 0, eps) * baseOffset; break;
+                case Direction.RIGHT: offset += new Vector3(-1, 0, -eps) * baseOffset; break;
             }
         }
         return offset;
