@@ -145,7 +145,7 @@ public class FootTracker : MonoBehaviour
 
     /* Analyses data to determine the step state */
     private int UpdateSteps(float simTime)
-    {
+    {/*
         if (DataCount() > 1)
         {
 
@@ -172,10 +172,10 @@ public class FootTracker : MonoBehaviour
                 dt = simTime - t0;
             }
         }
-
-        return NO_CHANGE;
         
-        /*
+        return NO_CHANGE;
+        */
+        
         if (LastStep == null || (LastStep != null && LastStep.isFinished()))
         {
             if (!InAirCriterion())
@@ -202,7 +202,7 @@ public class FootTracker : MonoBehaviour
                 // Stays in the air
             }
         }
-        return NO_CHANGE;*/
+        return NO_CHANGE;
 
 
 
@@ -420,7 +420,7 @@ public class FootTracker : MonoBehaviour
 
     private bool GroundedCriterion()
     {
-        return transform.position.y < 0.02f;
+        return transform.position.y <= 0.02f;
     }
 
     private bool InAirCriterion()

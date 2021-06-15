@@ -246,8 +246,8 @@ public class SimulationManager : MonoBehaviour
         }
         else
         {
-            InitQTMServer();
-            StartCoroutine(nameof(CheckQTMConnection));
+            //InitQTMServer();
+            //StartCoroutine(nameof(CheckQTMConnection));
         }
         if (pathName != PathName.M)
         {
@@ -283,7 +283,7 @@ public class SimulationManager : MonoBehaviour
 
         if (Camera.main.TryGetComponent(out TrackedPoseDriver poseDriver))
         {
-            poseDriver.enabled = false;
+            //poseDriver.enabled = false;
         }
     }
 
@@ -393,8 +393,20 @@ public class SimulationManager : MonoBehaviour
         }
     }
 
+    private bool hololensIsCalibrated = false;
     void Update()
     {
+        if (!hololensIsCalibrated && Input.GetKeyDown(KeyCode.F1))
+        {
+            Debug.Log("Hololens calibrated");
+            GameObject playspace = GameObject.Find("MixedRealityPlayspace");
+            playspace.transform.position = Vector3.zero;
+            playspace.transform.rotation = Quaternion.Euler(0f, 89.55f, 0f);
+            //GameObject origin = GameObject.Find("Origin");
+            //origin.transform.position = hololens.transform.position;
+
+            //hololensIsCalibrated = true;
+        }
         if (isTracking)
         {
             SimTime += Time.deltaTime;

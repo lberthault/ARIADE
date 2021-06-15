@@ -10,7 +10,7 @@ public class FollowObject : MonoBehaviour
 
     void Start()
     {
-        MatchPositionAndRotation();
+       MatchPositionAndRotation();
     }
     void Update()
     {
@@ -19,9 +19,7 @@ public class FollowObject : MonoBehaviour
 
     private void MatchPositionAndRotation()
     {
-        // transform.position = obj.transform.position;
-        transform.position = new Vector3(obj.transform.position.x, obj.transform.position.y, obj.transform.position.z);
+        transform.position = obj.transform.position;
         transform.rotation = obj.transform.rotation;
-        //transform.rotation = Quaternion.Euler(-obj.transform.rotation.eulerAngles.x, obj.transform.rotation.eulerAngles.y, -obj.transform.rotation.eulerAngles.z);
     }
 }

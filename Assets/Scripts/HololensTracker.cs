@@ -67,8 +67,14 @@ public class HololensTracker : MonoBehaviour
 
     private void Update()
     {
+        if (!participantReady && Input.GetKeyDown(KeyCode.F2))
+        {
+            Debug.Log("Participant ready");
+            participantReady = true;
+        }
         transform.position = new Vector3(-HMD.transform.position.x, HMD.transform.position.y, -HMD.transform.position.z);
         transform.rotation = Quaternion.Euler(-HMD.transform.rotation.eulerAngles.x, HMD.transform.rotation.eulerAngles.y, -HMD.transform.rotation.eulerAngles.z);
+
         if (Vector3.Distance(transform.position, lastPosition) > bigJumpThreshold)
         {
             if (trailRenderer != null) trailRenderer.Clear();
@@ -256,7 +262,7 @@ public class HololensTracker : MonoBehaviour
             {
                 if (simManager.TrialState == SimulationManager.TRIAL_NOT_STARTED)
                 {
-                    if ((detector.Area.IsOnExternalBorder() || detector.Area.IsOnInternalBorder()) && simManager.trialPath.Contains(detector.Area))
+                    if (participantReady && (detector.Area.IsOnExternalBorder() || detector.Area.IsOnInternalBorder()) && simManager.trialPath.Contains(detector.Area))
                     {
                         simManager.StartTrial(detector.Area);
                         EnteringArea(detector.Area);
@@ -357,6 +363,8 @@ public class HololensTracker : MonoBehaviour
     }
 
     public int removeLightAdvice = -1;
+    private bool participantReady = false;
+
     private void EnteringArea(Area area)
     {
         if (currentArea == null && simManager.pathName != SimulationManager.PathName.M)
