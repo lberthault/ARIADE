@@ -71,6 +71,7 @@ public class HololensTracker : MonoBehaviour
         {
             Debug.Log("Participant ready");
             participantReady = true;
+            InitAdvice();
         }
         transform.position = new Vector3(-HMD.transform.position.x, HMD.transform.position.y, -HMD.transform.position.z);
         transform.rotation = Quaternion.Euler(-HMD.transform.rotation.eulerAngles.x, HMD.transform.rotation.eulerAngles.y, -HMD.transform.rotation.eulerAngles.z);

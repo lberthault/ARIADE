@@ -208,7 +208,7 @@ public class SimulationManager : MonoBehaviour
             o.SetActive(mode == Mode.TEST);
         }
 
-        if (mode == Mode.XP)
+        if (setOcclusion)
         {
             foreach (GameObject o in invisibleObjects)
             {
@@ -219,20 +219,7 @@ public class SimulationManager : MonoBehaviour
                 SetObscurable(o);
             }
         }
-        else
-        {
-            if (setOcclusion)
-            {
-                foreach (GameObject o in invisibleObjects)
-                {
-                    SetInvisible(o);
-                }
-                foreach (GameObject o in obscurableObjects)
-                {
-                    SetObscurable(o);
-                }
-            }
-        }
+
         if (drawLines)
         {
             DrawTrialPath();
@@ -248,10 +235,6 @@ public class SimulationManager : MonoBehaviour
         {
             //InitQTMServer();
             //StartCoroutine(nameof(CheckQTMConnection));
-        }
-        if (pathName != PathName.M)
-        {
-            hololensTracker.InitAdvice();
         }
           
        
