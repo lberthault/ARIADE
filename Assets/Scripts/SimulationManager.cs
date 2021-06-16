@@ -69,8 +69,9 @@ public class SimulationManager : MonoBehaviour
     public static Path pathA = new Path("A16.15.25.24.33.43.42.32.22.21.20");
     public static Path pathB = new Path("B01.11.12.13.23.33.32.42.43.44.54");
     public static Path pathC = new Path("C55.45.35.34.23.13.12.11.21.31.30");
-    public static Path pathT = new Path("T55.45.44.43.53");
-    public static Path pathM = new Path("M46.45.44.43.42.41.40");
+    //public static Path pathT = new Path("T55.45.44.43.53");
+    public static Path pathT = new Path("T53.43.33.34.35.36");
+    public static Path pathM = new Path("M46.45.44.43.42.41.40.41.42.43.44.45.46");
 
     public PathName pathName;
     public Path trialPath;
@@ -144,8 +145,6 @@ public class SimulationManager : MonoBehaviour
     private float lightPathDelayInSeconds;
     [SerializeField]
     private float lightPathWidth = 0.08f;
-    [SerializeField]
-    private int lightPathCurveSegments = 100;
     public GameObject Peanut { get; set; }
     #endregion
 
@@ -379,6 +378,11 @@ public class SimulationManager : MonoBehaviour
     private bool hololensIsCalibrated = false;
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.F3))
+        {
+            Debug.Log("Data saved");
+            WriteData();
+        }
         if (!hololensIsCalibrated && Input.GetKeyDown(KeyCode.F1))
         {
             Debug.Log("Hololens calibrated");
@@ -509,11 +513,11 @@ public class SimulationManager : MonoBehaviour
     }
 
     public void StartTrial(Area startingArea)
-    {
+    {/*
         while (!trialPath.Get(0).Equals(startingArea))
         {
             trialPath.Pop();
-        }
+        }*/
         SetTrialState(TRIAL_ONGOING);
         ResetData();
     }
@@ -625,6 +629,7 @@ public class SimulationManager : MonoBehaviour
         flags.Add(positionList.Count);
         yield return null;
     }
+
     public void DrawLightPath(Area fromArea, Area atArea, Area toArea, Area totoArea)
     {
         float h = AdviceConfig.AdviceBaseHeight;

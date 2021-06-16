@@ -47,11 +47,10 @@ public class AreaDetector : MonoBehaviour
                         ((Renderer)renderer).material.mainTexture = Texture;
                         ToFadeMode(((Renderer)renderer).material);
                         SimulationManager.SetObscurable(renderer.gameObject);
-                        this.r = (Renderer)renderer;
+                        r = (Renderer)renderer;
                         r.enabled = true;
                         color = r.material.color;
                         alpha = 0f;
-                        time = 0f;
                         fadeIn = true;
                     }
                 }
@@ -71,9 +70,7 @@ public class AreaDetector : MonoBehaviour
         material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
     }
 
-    float time = 0f;
     float alpha = 0f;
-    float alphaIncrement = 0.01f;
     Color color;
 
     public void Update()
@@ -81,7 +78,6 @@ public class AreaDetector : MonoBehaviour
         if (fadeIn)
         {
 
-            time += Time.deltaTime;
             Color newColor = new Color(color.r, color.g, color.b, alpha);
             alpha += Time.deltaTime / fadeOutDuration;
             if (alpha >= 1)
@@ -96,8 +92,8 @@ public class AreaDetector : MonoBehaviour
             {
                 r.enabled = false;
                 fadeOut = false;
+                return;
             }
-            time += Time.deltaTime;
             Color newColor = new Color(color.r, color.g, color.b, alpha);
             alpha -= Time.deltaTime / fadeOutDuration;
             r.material.SetColor("_Color", newColor);
@@ -119,8 +115,7 @@ public class AreaDetector : MonoBehaviour
         {
             if (((Renderer)renderer).enabled)
             {
-                this.r = (Renderer)renderer;
-                time = 0f;
+                r = (Renderer)renderer;
                 color = r.material.color;
                 alpha = 1f;
                 fadeOut = true;

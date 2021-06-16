@@ -71,7 +71,11 @@ public class HololensTracker : MonoBehaviour
         {
             Debug.Log("Participant ready");
             participantReady = true;
-            InitAdvice();
+            if (simManager.pathName != SimulationManager.PathName.M)
+            {
+                simManager.StartTrial(NextArea(0));
+                EnteringArea(NextArea(0));
+            }
         }
         transform.position = new Vector3(-HMD.transform.position.x, HMD.transform.position.y, -HMD.transform.position.z);
         transform.rotation = Quaternion.Euler(-HMD.transform.rotation.eulerAngles.x, HMD.transform.rotation.eulerAngles.y, -HMD.transform.rotation.eulerAngles.z);
@@ -259,51 +263,10 @@ public class HololensTracker : MonoBehaviour
             if (simManager.TrialState == SimulationManager.TRIAL_ONGOING)
             {
                 EnteringArea(detector.Area);
-            } else
-            {
-                if (simManager.TrialState == SimulationManager.TRIAL_NOT_STARTED)
-                {
-                    if (participantReady && (detector.Area.IsOnExternalBorder() || detector.Area.IsOnInternalBorder()) && simManager.trialPath.Contains(detector.Area))
-                    {
-                        simManager.StartTrial(detector.Area);
-                        EnteringArea(detector.Area);
-                    }
-                }
             }
             
         }
 
-    }
-
-    public void InitAdvice()
-    {
-        Area nextArea = NextArea(0);
-        Area nextNextArea = NextArea(1);
-        Area nextNextNextArea = NextArea(2);
-        Vector3 position;
-        Vector3 rotation;
-        if (simManager.GetAdviceName() == SimulationManager.AdviceName.PEANUT)
-        {
-            position = AdviceBasePosition(nextNextArea) + AdvicePositionOffset(nextArea, nextNextArea, nextNextNextArea, true);
-            rotation = AdviceRotation(nextArea, nextNextArea, nextNextNextArea, true);
-            InstantiateCompanion(position, Quaternion.Euler(rotation));
-            int direction = 1;
-            if (GetAction(nextArea, nextNextArea, nextNextNextArea) == Action.TURN_LEFT)
-            {
-                direction = -1;
-            }
-            SetCompanionState(direction);
-        }
-        else if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW)
-        {
-            position = AdviceBasePosition(nextNextArea) + AdvicePositionOffset(nextArea, nextNextArea, nextNextNextArea, true);
-            rotation = AdviceRotation(nextArea, nextNextArea, nextNextNextArea, true);
-            AddArrow(nextNextArea, position, rotation);
-        }
-        else
-        {
-            simManager.DrawLightPath(nextArea, nextNextArea, nextNextNextArea, NextArea(3));
-        }
     }
 
     public int NumberOfErrors()
@@ -366,24 +329,59 @@ public class HololensTracker : MonoBehaviour
     public int removeLightAdvice = -1;
     private bool participantReady = false;
 
+   /* public void InitAdvice()
+    {
+        currentArea = NextArea(0);
+        Area nextArea = NextArea(0);
+        Area nextNextArea = NextArea(1);
+        Area nextNextNextArea = NextArea(2);
+        Vector3 position;
+        Vector3 rotation;
+        if (simManager.GetAdviceName() == SimulationManager.AdviceName.PEANUT)
+        {
+            position = AdviceBasePosition(nextNextArea) + AdvicePositionOffset(nextArea, nextNextArea, nextNextNextArea, true);
+            rotation = AdviceRotation(nextArea, nextNextArea, nextNextNextArea, true);
+            InstantiateCompanion(position, Quaternion.Euler(rotation));
+            int direction = 1;
+            if (GetAction(nextArea, nextNextArea, nextNextNextArea) == Action.TURN_LEFT)
+            {
+                direction = -1;
+            }
+            SetCompanionState(direction);
+        }
+        else if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW)
+        {
+            position = AdviceBasePosition(nextNextArea) + AdvicePositionOffset(nextArea, nextNextArea, nextNextNextArea, true);
+            rotation = AdviceRotation(nextArea, nextNextArea, nextNextNextArea, true);
+            AddArrow(nextNextArea, position, rotation);
+        }
+        else
+        {
+            simManager.DrawLightPath(nextArea, nextNextArea, nextNextNextArea, NextArea(3));
+        }
+        //walkedPath.Add(currentArea);
+        
+        //simManager.remainingPath.Pop();
+    }*/
+
     private void EnteringArea(Area area)
     {
-        if (currentArea == null && simManager.pathName != SimulationManager.PathName.M)
+        if (currentArea == null && participantReady)
         {
-          
+            Debug.Log("Entering area " + area);
             Area lastArea = walkedPath.GetLast();
 
             // Prevent area double check
-            if (lastArea != null && area.Equals(lastArea))
-            {
+            if (lastArea != null && area.Equals(lastArea)) 
                 return;
-            }
 
             // Update landmarks
             if (lastArea != null && !(area.InBigArea() && lastArea.InBigArea()))
             {
+                Debug.Log("Removed landmarks at " + lastArea);
                 lastArea.GetAreaDetector().RemoveLandmarks(true);
                 AreaDetector areaDetector = area.GetAreaDetector();
+                if (simManager.pathName != SimulationManager.PathName.M)
                 areaDetector.DisplayLandmarks(GetDirection(lastArea, area), true);
             }
 
@@ -464,135 +462,159 @@ public class HololensTracker : MonoBehaviour
                 matchingPath.Add(new Area(area));
 
                 // Display the next advice
-
-                Vector3 position;
-                Vector3 rotation;
-                if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW)
+                if (simManager.pathName != SimulationManager.PathName.M)
                 {
-                    if (walkedPath.Count() != 0)
+                    Vector3 position;
+                    Vector3 rotation;
+                    if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW)
                     {
-                        position = AdviceBasePosition(nextArea);
-                        if (nextNextArea != null)
-                        {
-                            position += AdvicePositionOffset(currentArea, nextArea, nextNextArea, true);
-                        }
-                        rotation = AdviceRotation(currentArea, nextArea, nextNextArea, true);
-                        AddArrow(nextArea, position, rotation);
+                        //if (walkedPath.Count() != 0)
+                        //{
+                            position = AdviceBasePosition(nextArea);
+                            if (nextNextArea != null)
+                            {
+                                position += AdvicePositionOffset(currentArea, nextArea, nextNextArea, true);
+                            }
+                            rotation = AdviceRotation(currentArea, nextArea, nextNextArea, true);
+                            AddArrow(nextArea, position, rotation);
+                        //}
                     }
-                } else if (simManager.GetAdviceName() == SimulationManager.AdviceName.LIGHT)
-                {
-                      simManager.DrawLightPath(currentArea, nextArea, nextNextArea, NextArea(2));
-                } else if (simManager.GetAdviceName() == SimulationManager.AdviceName.PEANUT)
-                {        
-                    if (walkedPath.Count() != 0)
+                    else if (simManager.GetAdviceName() == SimulationManager.AdviceName.LIGHT)
                     {
+                        simManager.DrawLightPath(currentArea, nextArea, nextNextArea, NextArea(2));
+                    }
+                    else if (simManager.GetAdviceName() == SimulationManager.AdviceName.PEANUT)
+                    {
+                        if (simManager.Peanut == null)
+                        {
+                            position = AdviceBasePosition(nextArea) + AdvicePositionOffset(currentArea, nextArea, nextNextArea, true);
+                            rotation = AdviceRotation(currentArea, nextArea, nextNextArea, true);
 
-                        if (nextArea.InBigArea() && nextNextArea.InBigArea())
+                            InstantiateCompanion(position, Quaternion.Euler(rotation));
+
+                            int direction = 1;
+                            if (GetAction(currentArea, nextArea, nextNextArea) == Action.TURN_LEFT)
+                            {
+                                direction = -1;
+                            }
+                            SetCompanionState(direction);
+                        } else
                         {
-                            SetCompanionState(0);
-                            object[] parms = new object[3] { currentArea, nextArea, nextNextArea };
-                            StopCoroutine(nameof(MoveCompanion));
-                            StartCoroutine(nameof(MoveCompanion2), parms);
+                            if (nextArea.InBigArea() && nextNextArea.InBigArea())
+                            {
+                                SetCompanionState(0);
+                                object[] parms = new object[3] { currentArea, nextArea, nextNextArea };
+                                StopCoroutine(nameof(MoveCompanion));
+                                StartCoroutine(nameof(MoveCompanion2), parms);
+                            }
+                            else if (!nextArea.InBigArea())
+                            {
+                                SetCompanionState(0);
+                                object[] parms = new object[3] { currentArea, nextArea, nextNextArea };
+                                StopCoroutine(nameof(MoveCompanion));
+                                StartCoroutine(nameof(MoveCompanion), parms);
+                            }
                         }
-                        else if (!nextArea.InBigArea())
-                        {
-                            SetCompanionState(0);
-                            object[] parms = new object[3] { currentArea, nextArea, nextNextArea };
-                            StopCoroutine(nameof(MoveCompanion));
-                            StartCoroutine(nameof(MoveCompanion), parms);
-                        }
+
                     }
-                    
                 }
+            
                 
 
             }
             else
             {
-                bool worsening;
-                if (currentError == null)
+                if (simManager.pathName != SimulationManager.PathName.M)
                 {
-                    simManager.remainingPath.Push(lastArea);
-                    simManager.RemoveAllAdvice();
-                    currentError = new Error(walkedPath.GetLast(), currentArea, simTime);
-                    errors.Add(currentError);
-                    worsening = true;
-                }
-                else
-                {
-                    if (worsening = currentError.Update(currentArea))
+                    bool worsening;
+                    if (currentError == null)
                     {
-                        // Error worsening
-                        simManager.remainingPath.Push(currentError.path.Get(currentError.path.Count() - 2));
+                        simManager.remainingPath.Push(lastArea);
+                        simManager.RemoveAllAdvice();
+                        currentError = new Error(walkedPath.GetLast(), currentArea, simTime);
+                        errors.Add(currentError);
+                        worsening = true;
                     }
-                }
-                Vector3 position;
-                Vector3 rotation;
-                if (worsening)
-                {
-                    simManager.RemoveAllAdvice();
-                    if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW)
+                    else
                     {
-                        position = AdviceBasePosition(currentArea) + WrongWayAdvicePositionOffset(currentArea, NextArea(0));
-                        rotation = WrongWayAdviceRotation(currentArea, NextArea(0));
-                        AddWrongWayAdvice(currentArea, position, rotation);
-                    }
-                    else if (simManager.GetAdviceName() == SimulationManager.AdviceName.LIGHT)
-                    {
-                        removeLightAdvice = -1;
-                        simManager.DrawLightPath(currentArea, NextArea(0), NextArea(1), NextArea(2));
-                        // simManager.DrawLightPath(Converter.AreaToVector3(NextArea(0), 0.2f), Converter.AreaToVector3(NextArea(1), 0.2f));
-                        position = AdviceBasePosition(currentArea) + WrongWayAdvicePositionOffset(currentArea, NextArea(0));
-                        rotation = WrongWayAdviceRotation(currentArea, NextArea(0));
-                        AddWrongWayAdvice(currentArea, position, rotation);
-                        //simManager.DrawWrongWayLightPath(currentArea, WrongWayAdvicePositionOffset(currentArea, NextArea(0)), WrongWayAdviceRotation(currentArea, NextArea(0)).y);
-
-                    } else
-                    {
-                        position = AdviceBasePosition(currentArea) + WrongWayAdvicePositionOffset(currentArea, NextArea(0));
-                        rotation = WrongWayAdviceRotation(currentArea, NextArea(0));
-                        AddWrongWayAdvice(currentArea, position, rotation);
-                    }
-                }
-                else
-                {
-                    if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW)
-                    {
-                        simManager.RemoveAdviceAtArea(lastArea);
-                        simManager.remainingPath.Pop();
-                    }
-                    else if (simManager.GetAdviceName() == SimulationManager.AdviceName.LIGHT)
-                    {
-                        simManager.RemoveWrongWayLightAdvice();
-                        if (removeLightAdvice == 1)
+                        if (worsening = currentError.Update(currentArea))
                         {
-                            simManager.RemoveLightAdvice();
+                            // Error worsening
+                            simManager.remainingPath.Push(currentError.path.Get(currentError.path.Count() - 2));
+                        }
+                    }
+                    Vector3 position;
+                    Vector3 rotation;
+                    if (worsening)
+                    {
+                        simManager.RemoveAllAdvice();
+                        if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW)
+                        {
+                            position = AdviceBasePosition(currentArea) + WrongWayAdvicePositionOffset(currentArea, NextArea(0));
+                            rotation = WrongWayAdviceRotation(currentArea, NextArea(0));
+                            AddWrongWayAdvice(currentArea, position, rotation);
+                        }
+                        else if (simManager.GetAdviceName() == SimulationManager.AdviceName.LIGHT)
+                        {
+                            removeLightAdvice = -1;
+                            simManager.DrawLightPath(currentArea, NextArea(0), NextArea(1), NextArea(2));
+                            // simManager.DrawLightPath(Converter.AreaToVector3(NextArea(0), 0.2f), Converter.AreaToVector3(NextArea(1), 0.2f));
+                            position = AdviceBasePosition(currentArea) + WrongWayAdvicePositionOffset(currentArea, NextArea(0));
+                            rotation = WrongWayAdviceRotation(currentArea, NextArea(0));
+                            AddWrongWayAdvice(currentArea, position, rotation);
+                            //simManager.DrawWrongWayLightPath(currentArea, WrongWayAdvicePositionOffset(currentArea, NextArea(0)), WrongWayAdviceRotation(currentArea, NextArea(0)).y);
+
                         }
                         else
                         {
-                            removeLightAdvice++;
+                            position = AdviceBasePosition(currentArea) + WrongWayAdvicePositionOffset(currentArea, NextArea(0));
+                            rotation = WrongWayAdviceRotation(currentArea, NextArea(0));
+                            AddWrongWayAdvice(currentArea, position, rotation);
                         }
-                        simManager.DrawLightPath(currentArea, NextArea(0), NextArea(1), NextArea(2));
-
-                    } else
+                    }
+                    else
                     {
-                        simManager.RemoveAdviceAtArea(lastArea);
-                        simManager.remainingPath.Pop();
+                        if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW)
+                        {
+                            simManager.RemoveAdviceAtArea(lastArea);
+                            simManager.remainingPath.Pop();
+                        }
+                        else if (simManager.GetAdviceName() == SimulationManager.AdviceName.LIGHT)
+                        {
+                            simManager.RemoveWrongWayLightAdvice();
+                            if (removeLightAdvice == 1)
+                            {
+                                simManager.RemoveLightAdvice();
+                            }
+                            else
+                            {
+                                removeLightAdvice++;
+                            }
+                            simManager.DrawLightPath(currentArea, NextArea(0), NextArea(1), NextArea(2));
+
+                        }
+                        else
+                        {
+                            simManager.RemoveAdviceAtArea(lastArea);
+                            simManager.remainingPath.Pop();
+                        }
+                    }
+
+                    if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW)
+                    {
+                        position = AdviceBasePosition(NextArea(0)) + AdvicePositionOffset(currentArea, NextArea(0), NextArea(1), true);
+                        rotation = AdviceRotation(currentArea, NextArea(0), NextArea(1), true);
+                        AddArrow(NextArea(0), position, rotation);
+                    }
+                    else if (simManager.GetAdviceName() == SimulationManager.AdviceName.PEANUT)
+                    {
+                        SetCompanionState(0);
+                        object[] parms = new object[3] { currentArea, NextArea(0), NextArea(1) };
+                        StopCoroutine(nameof(MoveCompanion));
+                        StartCoroutine(nameof(MoveCompanion), parms);
                     }
                 }
-
-                if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW)
-                {
-                    position = AdviceBasePosition(NextArea(0)) + AdvicePositionOffset(currentArea, NextArea(0), NextArea(1), true);
-                    rotation = AdviceRotation(currentArea, NextArea(0), NextArea(1), true);
-                    AddArrow(NextArea(0), position, rotation);
-                } else if (simManager.GetAdviceName() == SimulationManager.AdviceName.PEANUT)
-                {
-                    SetCompanionState(0);
-                    object[] parms = new object[3] { currentArea, NextArea(0), NextArea(1) };
-                    StopCoroutine(nameof(MoveCompanion));
-                    StartCoroutine(nameof(MoveCompanion), parms);
-                }
+            
 
 
             }

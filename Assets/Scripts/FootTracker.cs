@@ -138,11 +138,6 @@ public class FootTracker : MonoBehaviour
         //DataManager.WriteDataInFile(dataFileName, simManager.GetNavConfig(), "   steps = " + StepCount + " : mLength = " + Converter.Round(TotalMeanStepLength(), 2) + " mTime = " + Converter.Round(TotalMeanStepTime(), 2) + " mPause = " + Converter.Round(TotalMeanPause(), 2));
     }
 
-    bool startStep = false;
-    float Tse = 0.5f;
-    float t0 = 0f;
-    float dt = 999f;
-
     /* Analyses data to determine the step state */
     private int UpdateSteps(float simTime)
     {/*
