@@ -604,8 +604,8 @@ public class SimulationManager : MonoBehaviour
         {
             start = (at + to) / 2f;
         }
-
-        flags.Add(positionList.Count - flags[flags.Count - 1]);
+        //flags.Add(positionList.Count);
+         flags.Add(positionList.Count - flags[flags.Count - 1]);
         yield return null;
     }
 
