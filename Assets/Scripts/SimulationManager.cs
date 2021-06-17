@@ -585,6 +585,7 @@ public class SimulationManager : MonoBehaviour
             lightPathLineRenderer.SetPosition(lightPathLineRenderer.positionCount - 1, curve);
             yield return new WaitForSeconds(lightPathDelayInSeconds);
         }
+        flags.Add(positionList.Count);
         if (toto != null)
         {
             for (float ratio = 0; ratio <= 1; ratio += 1f / vertexCount)
@@ -604,7 +605,7 @@ public class SimulationManager : MonoBehaviour
             start = (at + to) / 2f;
         }
 
-        flags.Add(positionList.Count);
+        flags.Add(positionList.Count - flags[flags.Count - 1]);
         yield return null;
     }
 

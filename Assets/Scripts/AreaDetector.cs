@@ -5,10 +5,11 @@ using UnityEngine;
 
 /* Makes the link between the area detector gameobject equipped with a collider and the abstract Area class */
 public class AreaDetector : MonoBehaviour
-{
-    Renderer r;
+{/*
+    List<Renderer> fadeInRenderers;
+    List<Renderer> fadeOutRenderers;
     bool fadeIn = false;
-    bool fadeOut = false;
+    bool fadeOut = false;*/
     float fadeOutDuration;
 
     public int line, column;
@@ -21,6 +22,8 @@ public class AreaDetector : MonoBehaviour
 
     public void Start()
     {
+        //fadeInRenderers = new List<Renderer>();
+        //fadeOutRenderers = new List<Renderer>();
         fadeOutDuration = GameObject.Find("SimulationManager").GetComponent<SimulationManager>().landmarkFadeOutDuration;
     }
     public void DisplayLandmarks(HololensTracker.Direction from, bool checkBigArea)
@@ -43,19 +46,63 @@ public class AreaDetector : MonoBehaviour
                 {
                     if (!((Renderer)renderer).enabled)
                     {
-                        object[] parms = new object[1] { (Renderer)renderer };
-                        ((Renderer)renderer).material.mainTexture = Texture;
-                        ToFadeMode(((Renderer)renderer).material);
-                        SimulationManager.SetObscurable(renderer.gameObject);
-                        r = (Renderer)renderer;
+                        Renderer r = (Renderer)renderer;
+                        object[] parms = new object[1] { r };
+                        r.material.mainTexture = Texture;
+                        SimulationManager.SetObscurable(r.gameObject);
+                        //fadeInRenderers.Add(r);
                         r.enabled = true;
-                        color = r.material.color;
-                        alpha = 0f;
-                        fadeIn = true;
+                        ToFadeMode(r.material);
+                        //color = r.material.color;
+                        //alpha = 0f;
+                        //fadeIn = true;
+                        StartCoroutine(nameof(FadeIn), parms);
                     }
                 }
             }
         }
+    }
+
+    private IEnumerator FadeIn(object[] parms)
+    {
+        fadeOutDuration = GameObject.Find("SimulationManager").GetComponent<SimulationManager>().landmarkFadeOutDuration;
+
+        Renderer r = (Renderer) parms[0];
+        float alpha = 0f;
+        Color color = r.material.color;
+        color.a = 0f;
+        Color newColor = new Color(color.r, color.g, color.b, 1f);
+        Color c;
+        float time = 0f;
+        while (time < fadeOutDuration)
+        {
+            time += Time.deltaTime;
+            c = Color.Lerp(color, newColor, time / fadeOutDuration);
+            r.material.SetColor("_Color", c);
+            yield return null;
+        }
+
+    }
+
+    private IEnumerator FadeOut(object[] parms)
+    {
+        fadeOutDuration = GameObject.Find("SimulationManager").GetComponent<SimulationManager>().landmarkFadeOutDuration;
+
+        Renderer r = (Renderer)parms[0];
+        Color color = r.material.color;
+        color.a = 1f;
+        Color newColor = new Color(color.r, color.g, color.b, 0f);
+        Color c;
+        float time = 0f;
+        while (time < fadeOutDuration)
+        {
+            time += Time.deltaTime;
+            c = Color.Lerp(color, newColor, time / fadeOutDuration);
+            r.material.SetColor("_Color", c);
+            yield return null;
+        }
+        r.enabled = false;
+
     }
 
     public void ToFadeMode(Material material)
@@ -70,11 +117,11 @@ public class AreaDetector : MonoBehaviour
         material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
     }
 
-    float alpha = 0f;
-    Color color;
+    //float alpha = 0f;
+   // Color color;
 
     public void Update()
-    {
+    {/*
         if (fadeIn)
         {
 
@@ -97,7 +144,7 @@ public class AreaDetector : MonoBehaviour
             Color newColor = new Color(color.r, color.g, color.b, alpha);
             alpha -= Time.deltaTime / fadeOutDuration;
             r.material.SetColor("_Color", newColor);
-        }
+        }*/
     }
 
     public void RemoveLandmarks(bool checkBigArea)
@@ -115,10 +162,18 @@ public class AreaDetector : MonoBehaviour
         {
             if (((Renderer)renderer).enabled)
             {
-                r = (Renderer)renderer;
-                color = r.material.color;
-                alpha = 1f;
-                fadeOut = true;
+                // r = (Renderer)renderer;
+                //color = r.material.color;
+                //alpha = 1f;
+                //fadeOut = true;
+                Renderer r = (Renderer)renderer;
+                object[] parms = new object[1] { r };
+                //fadeInRenderers.Add(r);
+                //ToFadeMode(r.material);
+                //color = r.material.color;
+                //alpha = 0f;
+                //fadeIn = true;
+                StartCoroutine(nameof(FadeOut), parms);
             }
         }
     }

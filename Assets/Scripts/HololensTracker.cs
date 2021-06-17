@@ -672,7 +672,6 @@ public class HololensTracker : MonoBehaviour
             }
             turnSpeed = Mathf.Min(angleToTurn, turnSpeed + turnSpeedChange);
             simManager.Peanut.transform.rotation = Quaternion.Lerp(simManager.Peanut.transform.rotation, r1, Mathf.Clamp01(angleToTurn > 0 ? turnSpeed / angleToTurn : 0f));
-  
 
             yield return new WaitForSeconds(0.01f);
         }
