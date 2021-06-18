@@ -329,40 +329,42 @@ public class HololensTracker : MonoBehaviour
     public int removeLightAdvice = -1;
     private bool participantReady = false;
 
-   /* public void InitAdvice()
-    {
-        currentArea = NextArea(0);
-        Area nextArea = NextArea(0);
-        Area nextNextArea = NextArea(1);
-        Area nextNextNextArea = NextArea(2);
-        Vector3 position;
-        Vector3 rotation;
-        if (simManager.GetAdviceName() == SimulationManager.AdviceName.PEANUT)
-        {
-            position = AdviceBasePosition(nextNextArea) + AdvicePositionOffset(nextArea, nextNextArea, nextNextNextArea, true);
-            rotation = AdviceRotation(nextArea, nextNextArea, nextNextNextArea, true);
-            InstantiateCompanion(position, Quaternion.Euler(rotation));
-            int direction = 1;
-            if (GetAction(nextArea, nextNextArea, nextNextNextArea) == Action.TURN_LEFT)
-            {
-                direction = -1;
-            }
-            SetCompanionState(direction);
-        }
-        else if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW)
-        {
-            position = AdviceBasePosition(nextNextArea) + AdvicePositionOffset(nextArea, nextNextArea, nextNextNextArea, true);
-            rotation = AdviceRotation(nextArea, nextNextArea, nextNextNextArea, true);
-            AddArrow(nextNextArea, position, rotation);
-        }
-        else
-        {
-            simManager.DrawLightPath(nextArea, nextNextArea, nextNextNextArea, NextArea(3));
-        }
-        //walkedPath.Add(currentArea);
-        
-        //simManager.remainingPath.Pop();
-    }*/
+    /* public void InitAdvice()
+     {
+         currentArea = NextArea(0);
+         Area nextArea = NextArea(0);
+         Area nextNextArea = NextArea(1);
+         Area nextNextNextArea = NextArea(2);
+         Vector3 position;
+         Vector3 rotation;
+         if (simManager.GetAdviceName() == SimulationManager.AdviceName.PEANUT)
+         {
+             position = AdviceBasePosition(nextNextArea) + AdvicePositionOffset(nextArea, nextNextArea, nextNextNextArea, true);
+             rotation = AdviceRotation(nextArea, nextNextArea, nextNextNextArea, true);
+             InstantiateCompanion(position, Quaternion.Euler(rotation));
+             int direction = 1;
+             if (GetAction(nextArea, nextNextArea, nextNextNextArea) == Action.TURN_LEFT)
+             {
+                 direction = -1;
+             }
+             SetCompanionState(direction);
+         }
+         else if (simManager.GetAdviceName() == SimulationManager.AdviceName.ARROW)
+         {
+             position = AdviceBasePosition(nextNextArea) + AdvicePositionOffset(nextArea, nextNextArea, nextNextNextArea, true);
+             rotation = AdviceRotation(nextArea, nextNextArea, nextNextNextArea, true);
+             AddArrow(nextNextArea, position, rotation);
+         }
+         else
+         {
+             simManager.DrawLightPath(nextArea, nextNextArea, nextNextNextArea, NextArea(3));
+         }
+         //walkedPath.Add(currentArea);
+
+         //simManager.remainingPath.Pop();
+     }*/
+
+    bool errorCorrected = false;
 
     private void EnteringArea(Area area)
     {
@@ -435,6 +437,7 @@ public class HololensTracker : MonoBehaviour
                 // If an error was registered but the participant has corrected it, remove it
                 if (currentError != null)
                 {
+                    errorCorrected = true;
                     currentError.SetCorrect(simTime);
                     currentError = null;
                 }
@@ -507,8 +510,9 @@ public class HololensTracker : MonoBehaviour
                                 StopCoroutine(nameof(MoveCompanion));
                                 StartCoroutine(nameof(MoveCompanion2), parms);
                             }
-                            else if (!nextArea.InBigArea())
+                            else if (errorCorrected || !nextArea.InBigArea())
                             {
+                                errorCorrected = false;
                                 SetCompanionState(0);
                                 object[] parms = new object[3] { currentArea, nextArea, nextNextArea };
                                 StopCoroutine(nameof(MoveCompanion));
