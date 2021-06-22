@@ -15385,12 +15385,12 @@ PrefabInstance:
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
       propertyPath: mode
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
       propertyPath: advice
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
@@ -15440,7 +15440,7 @@ PrefabInstance:
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
       propertyPath: setOcclusion
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
@@ -15455,17 +15455,17 @@ PrefabInstance:
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
       propertyPath: participantName
-      value: S008AIDANT
+      value: "L\xE9o"
       objectReference: {fileID: 0}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
       propertyPath: adviceConfigName
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
       propertyPath: manualController
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
