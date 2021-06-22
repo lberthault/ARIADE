@@ -43,11 +43,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a9a039350a76a9949837adb90e367d2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  participantName: "Martine Dupr\xE9"
-  debugMode: 1
+  participantName: S015
   drawLines: 0
+  setOcclusion: 1
+  manualController: 0
+  drawGUI: 0
+  mode: 0
   debugObjects:
-  - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
@@ -60,24 +62,29 @@ MonoBehaviour:
   invisibleMaterial: {fileID: 2100000, guid: d22b7b5f2ff546541a8652b4de8a6450, type: 2}
   pathLineMaterial: {fileID: 2100000, guid: 3c540979fa7b4f143bde79c6fb9fe6e7, type: 2}
   pathLineHeight: 0.7
-  pathLineWidth: 0.05
+  pathLineWidth: 0.03
   debugMovementSpeed: 1
   debugMouseSensitivity: 2
   pathName: 0
-  advice: 1
-  adviceConfigName: 2
+  landmarkFadeOutDuration: 0.5
+  advice: 2
+  adviceConfigName: 3
   arrowPrefab: {fileID: 4599282483956589419, guid: 8fc8e48d227dbf74699060a57b77a8b1,
     type: 3}
   lightPrefab: {fileID: 0}
-  peanutPrefab: {fileID: 0}
+  peanutPrefab: {fileID: 512396552925032004, guid: dbc1b5d1410f8474fbb872a1c1ce35e1,
+    type: 3}
   arrowWrongWayPrefab: {fileID: 1091452607094662007, guid: a68dd5fc7c1b59542b00a1a225874281,
     type: 3}
-  lightWrongWayPrefab: {fileID: 655261816301447210, guid: a01befa1697c22a4db77915dd7f675a2,
+  lightWrongWayPrefab: {fileID: 1091452607094662007, guid: 4753cd80545317944964596f3cf1268c,
     type: 3}
-  peanutWrongWayPrefab: {fileID: 0}
+  peanutWrongWayPrefab: {fileID: 1091452607094662007, guid: c596cdfd0fc295847b719533b9a22907,
+    type: 3}
   lightPathMaterial: {fileID: 2100000, guid: 2acec0dfd39c5314c857a737f9eef267, type: 2}
   lightPathWrongWayMaterial: {fileID: 2100000, guid: f4b10ed9f60954846bab752498431138,
     type: 2}
+  lightPathDelayInSeconds: 0.002
+  lightPathWidth: 0.5
   canvasGUI: {fileID: 0}
   participantGUI: {fileID: 0}
   pathGUI: {fileID: 0}
@@ -91,6 +98,5 @@ MonoBehaviour:
   trackingPeriod: 0.01
   feet: {fileID: 0}
   hololens: {fileID: 0}
-  areaDetectorPrefab: {fileID: 5307420673058566518, guid: 8e1b136061d89c844a97cacb0983b797,
+  areaDetectorPrefab: {fileID: 5301630475819514972, guid: 86a67ec8b3135af4aa504dcb441a5a80,
     type: 3}
-  lightPathDelayInSeconds: 0.007

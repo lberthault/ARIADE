@@ -13847,7 +13847,7 @@ PrefabInstance:
     - target: {fileID: 2461738174043341970, guid: c63a6247a5e361f4f8433c282bd2c8b0,
         type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2461738174043341971, guid: c63a6247a5e361f4f8433c282bd2c8b0,
         type: 3}
@@ -15385,23 +15385,18 @@ PrefabInstance:
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
       propertyPath: mode
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
       propertyPath: advice
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
       propertyPath: dataGUI
       value: 
       objectReference: {fileID: 420473750}
-    - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
-        type: 3}
-      propertyPath: drawGUI
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
       propertyPath: modeGUI
@@ -15439,34 +15434,13 @@ PrefabInstance:
       objectReference: {fileID: 1395741351}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
-      propertyPath: debugMode
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
-        type: 3}
-      propertyPath: drawLines
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
-        type: 3}
       propertyPath: qualisysGUI
       value: 
       objectReference: {fileID: 977037108}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
-      propertyPath: peanutPrefab
-      value: 
-      objectReference: {fileID: 512396552925032004, guid: dbc1b5d1410f8474fbb872a1c1ce35e1,
-        type: 3}
-    - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
-        type: 3}
       propertyPath: setOcclusion
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
-        type: 3}
-      propertyPath: pathLineWidth
-      value: 0.03
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
@@ -15475,66 +15449,23 @@ PrefabInstance:
       objectReference: {fileID: 548466338}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
-      propertyPath: lightPathWidth
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
-        type: 3}
       propertyPath: participantGUI
       value: 
       objectReference: {fileID: 1975648176}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
       propertyPath: participantName
-      value: S009
+      value: S008AIDANT
       objectReference: {fileID: 0}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
       propertyPath: adviceConfigName
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
       propertyPath: manualController
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
-        type: 3}
-      propertyPath: areaDetectorPrefab
-      value: 
-      objectReference: {fileID: 5301630475819514972, guid: 86a67ec8b3135af4aa504dcb441a5a80,
-        type: 3}
-    - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
-        type: 3}
-      propertyPath: lightWrongWayPrefab
-      value: 
-      objectReference: {fileID: 1091452607094662007, guid: 4753cd80545317944964596f3cf1268c,
-        type: 3}
-    - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
-        type: 3}
-      propertyPath: peanutWrongWayPrefab
-      value: 
-      objectReference: {fileID: 1091452607094662007, guid: c596cdfd0fc295847b719533b9a22907,
-        type: 3}
-    - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
-        type: 3}
-      propertyPath: debugMouseSensitivity
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
-        type: 3}
-      propertyPath: debugObjects.Array.size
-      value: 6
-      objectReference: {fileID: 0}
-    - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
-        type: 3}
-      propertyPath: landmarkFadeOutDuration
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
-        type: 3}
-      propertyPath: lightPathDelayInSeconds
-      value: 0.002
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
@@ -15564,11 +15495,6 @@ PrefabInstance:
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
         type: 3}
       propertyPath: debugObjects.Array.data[5]
-      value: 
-      objectReference: {fileID: 1395741351}
-    - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,
-        type: 3}
-      propertyPath: debugObjects.Array.data[6]
       value: 
       objectReference: {fileID: 1395741351}
     - target: {fileID: 5315803403626654414, guid: 70216aaddc25ead4db6b4602137666e0,

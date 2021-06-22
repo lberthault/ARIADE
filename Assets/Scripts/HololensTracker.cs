@@ -73,7 +73,7 @@ public class HololensTracker : MonoBehaviour
             participantReady = true;
             if (simManager.pathName != SimulationManager.PathName.M)
             {
-                simManager.StartTrial(NextArea(0));
+                simManager.StartTrial();
                 EnteringArea(NextArea(0));
             }
         }
@@ -766,7 +766,7 @@ public class HololensTracker : MonoBehaviour
             yield return new WaitForSeconds(0.001f);
         }
 
-        object[] parms2 = new object[3] { nextArea, nextNextArea, NextArea(3) };
+        object[] parms2 = new object[3] { nextArea, nextNextArea, NextArea(2) };
         StartCoroutine(nameof(MoveCompanion), parms2);
         yield return null;
     }
@@ -836,6 +836,7 @@ public class HololensTracker : MonoBehaviour
     private void InstantiateCompanion(Vector3 position, Quaternion rotation)
     {
         simManager.Peanut = Instantiate(simManager.AdviceConfig.AdvicePrefab, position, rotation);
+        //SimulationManager.SetObscurable(simManager.Peanut);
     }
 
     private Direction GetDirection(Area from, Area to)

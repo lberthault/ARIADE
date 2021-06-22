@@ -512,7 +512,7 @@ public class SimulationManager : MonoBehaviour
         return navConfig;
     }
 
-    public void StartTrial(Area startingArea)
+    public void StartTrial()
     {/*
         while (!trialPath.Get(0).Equals(startingArea))
         {
@@ -707,6 +707,12 @@ public class SimulationManager : MonoBehaviour
         {
             ((Renderer)renderer).material.renderQueue = 3002;
         }
+        /*
+        foreach (Transform t in o.transform)
+        {
+            SetObscurable(t.gameObject);
+        }
+        */
     }
 
     private void SetInvisible(GameObject o)
