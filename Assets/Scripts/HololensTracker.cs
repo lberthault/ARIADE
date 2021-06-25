@@ -370,7 +370,7 @@ public class HololensTracker : MonoBehaviour
     {
         if (currentArea == null && participantReady)
         {
-            Debug.Log("Entering area " + area);
+            //Debug.Log("Entering area " + area);
             Area lastArea = walkedPath.GetLast();
 
             // Prevent area double check
@@ -380,7 +380,7 @@ public class HololensTracker : MonoBehaviour
             // Update landmarks
             if (lastArea != null && !(area.InBigArea() && lastArea.InBigArea()))
             {
-                Debug.Log("Removed landmarks at " + lastArea);
+                //Debug.Log("Removed landmarks at " + lastArea);
                 lastArea.GetAreaDetector().RemoveLandmarks(true);
                 AreaDetector areaDetector = area.GetAreaDetector();
                 if (simManager.pathName != SimulationManager.PathName.M)

@@ -1,0 +1,2 @@
+Path;Advice;Simulation time (s);Distance travelled (m);Mean speed (m/s);Number of steps;Mean step frequency (step/s);Percent of left foot in front;Walked path;Number of areas covered;Average time in area (s);Nbr errors; Nbr wrong areas;Total error time (s);Total error distance (m)
+C;PEANUT;56,06332;22,2012;0,3960022;1;-1;1;55.45.35.34.23.13.12.11.21.31;10;5,606332;0;0;0;0

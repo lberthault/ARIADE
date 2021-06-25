@@ -225,7 +225,7 @@ public class FeetTracker : MonoBehaviour
             // Draw direction line
             UpdateDirectionLine(OC, OC + v / Mathf.Sqrt(ScalarProduct(v, v)) * directionLineLength, Color.black);
         }
-        // Compute distance between both feet and the center of the feet to determine which one if in front
+        // Compute distance between both feet and the center of the feet to determine which one is in front
         float dL = ScalarProduct(posL - OC, v) / ScalarProduct(v, v);
         float dR = ScalarProduct(posR - OC, v) / ScalarProduct(v, v);
 
@@ -240,9 +240,7 @@ public class FeetTracker : MonoBehaviour
         for (int i = 0; i < N; i++)
         {
             if (FrontFoot(lFoot.GetDataAtIndex(i), rFoot.GetDataAtIndex(i)) == lFoot)
-            {
                 n++;
-            }
         }
         return 1f*n/N;
     }
