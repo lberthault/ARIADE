@@ -8,43 +8,36 @@ using UnityEngine;
 public class FootTracker : MonoBehaviour
 {
 
-    public GameObject footObj;
-
     public const int NO_CHANGE = 0;
     public const int STEP_START = 1;
     public const int STEP_END = 2;
 
-    public Foot foot;
+    public Foot Foot;
 
-    private SimulationManager simManager;
+    private GameManager gm;
 
-    //Data
-    private string dataFileName;
-    private List<DataSnapshot> data;
-    private List<Step> steps;
-    public List<Step> Steps
-    {
-        get { return steps; }
-        set { steps = value; }
-    }
-
-    //Trail
-    private TrailRenderer trailRenderer;
-    public Material footTrailMaterial;
-    public float trailTime = 9999f;
-    public float trailSize = 0.05f;
-    public float trailSensibility = 0.01f;
-
-    Vector3 lastPosition;
-    public float bigJumpThreshold = 5f;
-
-    public Step LastStep
+    public string Name
     {
         get
         {
-            if (StepCount != 0)
+            return Foot + " Foot";
+        }
+    }
+
+    //Data
+    private string dataFileName;
+    private List<DataSnapshot> _data;
+    public List<DataSnapshot> Data
+    {
+        get { return _data; }
+    }
+    public DataSnapshot LastDataSnapshot
+    {
+        get
+        {
+            if (DataCount > 0)
             {
-                return steps[StepCount - 1];
+                return _data[DataCount - 1];
             }
             else
             {
@@ -52,72 +45,114 @@ public class FootTracker : MonoBehaviour
             };
         }
     }
+    private List<Step> _steps;
+    public List<Step> Steps
+    {
+        get { return _steps; }
+        set { _steps = value; }
+    }
+    public int DataCount
+    {
+        get { return _data.Count; }
+    }
+    private Accelerometer accelerometer;
+    private float magnitude;
+
+    //Trail
+    private Trail trail;
+
+    private Vector3 lastPosition;
+
+    //Step
+    private bool stepping = false;
+    private float stepDelay = 0f;
+    private float endStepDetectionThreshold = 0.2f; //0.2f
+    private float highMagnitudeThreshold = 0.8f; //1f
+    private float lowMagnitudeThreshold = 0.1f; //0.3f
+
+    public Step LastStep
+    {
+        get
+        {
+            return (StepCount != 0) ? Steps[StepCount - 1] : null;
+        }
+    }
+
+    public Step LastFinishedStep
+    {
+        get
+        {
+            if (LastStep == null)
+                return null;
+            return LastStep.IsFinished() ? LastStep : Steps[StepCount - 2];
+        }
+    }
 
     public int StepCount
     {
         get
         {
-            return steps.Count;
-        }
-    }
-
-    public string Name
-    {
-        get
-        {
-            return foot + " Foot";
+            return _steps.Count;
         }
     }
 
     private void Awake()
     {
-        steps = new List<Step>();
-        simManager = GameObject.Find("SimulationManager").GetComponent<SimulationManager>();
-        dataFileName = foot + "FootData";
-        data = new List<DataSnapshot>();
-        if (simManager.drawLines)
+        trail = GetComponent<Trail>();
+        accelerometer = GetComponent<Accelerometer>();
+        _steps = new List<Step>();
+        dataFileName = Foot + "FootData";
+        _data = new List<DataSnapshot>();
+    }
+
+    private void Start()
+    {
+        gm = GameManager.Instance;
+        if (gm.drawDebug)
         {
-            SetupTrailRenderer();
+            trail.Initiate();
         }
     }
-
-    /* Adds a trail renderer to the foot to visually follow its trajectory */
-    private void SetupTrailRenderer()
-    {
-        trailRenderer = (TrailRenderer)gameObject.AddComponent(typeof(TrailRenderer));
-        trailRenderer.startWidth = trailSize;
-        trailRenderer.endWidth = trailSize;
-        trailRenderer.time = trailTime;
-        trailRenderer.minVertexDistance = trailSensibility;
-        trailRenderer.material = footTrailMaterial;
-    }
-
-    private void Update()
-    {
-        transform.position = new Vector3(-footObj.transform.position.x, footObj.transform.position.y, -footObj.transform.position.z);
-        transform.rotation = Quaternion.Euler(-footObj.transform.rotation.eulerAngles.x, footObj.transform.rotation.eulerAngles.y, -footObj.transform.rotation.eulerAngles.z);
-        if (Vector3.Distance(transform.position, lastPosition) > bigJumpThreshold)
-        {
-            if (trailRenderer != null) trailRenderer.Clear();
-        }
-        lastPosition = transform.position;
-    }
-
+  
     public int Track(float simTime)
     {
-        if (trailRenderer != null)
+        if (trail.Initiated)
         {
-            CheckTrailRendererModifications();
+            trail.CheckModifications();
         }
+
+        Vector3 acceleration = accelerometer.LinearAcceleration(transform.position, Accelerometer.DEFAULT_SAMPLES);
+        magnitude = acceleration.magnitude;
+
         RegisterData(simTime);
         WriteData(simTime);
         int res = UpdateSteps(simTime);
+
+        //Clear trail when trial ended
+        if (Vector3.Distance(transform.position, lastPosition) > 5f)
+        {
+            if (trail.Initiated) trail.Clear();
+        }
+        lastPosition = transform.position;
+
         return res;
     }
 
     private void WriteData(float simTime)
     {
-        string header = "Simulation time (s);Position vector;;;Euler rotation vector;;;Mean speed (m/s);Nb Steps;Mean step length (m);Mean step time (s);Mean step pause (s)";
+        string header = "Simulation time (s);" +
+            "Position vector;" +
+            ";" +
+            ";" +
+            "Euler rotation vector;" +
+            ";" +
+            ";" +
+            "Magnitude (m/s²);" +
+            "Mean speed (m/s);" +
+            "Nb Steps;" +
+            "Mean step length (m);" +
+            "Mean step time (s);" +
+            "Mean step pause (s)";
         string data = simTime + ";"
                 + transform.position.x + ";"
                 + transform.position.y + ";"
@@ -125,382 +160,89 @@ public class FootTracker : MonoBehaviour
                 + transform.rotation.eulerAngles.x + ";"
                 + transform.rotation.eulerAngles.y + ";"
                 + transform.rotation.eulerAngles.z + ";"
-                + MeanSpeed() + ";"
+                + magnitude + ";"
+                + DataAnalyzer.MeanSpeed(this._data) + ";"
                 + StepCount + ";"
-                + TotalMeanStepLength() + ";"
-                + TotalMeanStepTime() + ";"
-                + TotalMeanPause();
-        DataManager.WriteData(simManager.GetNavConfig(), dataFileName, header, data, false);
-        /*
-        DataManager.WriteDataInFile(dataFileName, simManager.GetNavConfig(), simTime + "=" + VerticalAcceleration(DataCount()-2));
-        */
-        //DataManager.WriteDataInFile(dataFileName, simManager.GetNavConfig(), "t = " + simTime + " : pos = " + transform.position + " rot = " + transform.rotation.eulerAngles + " mSpeed = " + Converter.Round(MeanSpeed(), 2));
-        //DataManager.WriteDataInFile(dataFileName, simManager.GetNavConfig(), "   steps = " + StepCount + " : mLength = " + Converter.Round(TotalMeanStepLength(), 2) + " mTime = " + Converter.Round(TotalMeanStepTime(), 2) + " mPause = " + Converter.Round(TotalMeanPause(), 2));
+                + DataAnalyzer.MeanStepLength(_steps) + ";"
+                + DataAnalyzer.MeanStepTime(_steps) + ";"
+                + DataAnalyzer.MeanNetPause(_steps);
+        DataWriter.WriteData(dataFileName, header, data, false);
     }
 
-    /* Analyses data to determine the step state */
+    float d = 0f;
+    float dt = 0f;
+    bool hesitating = false;
+    /* Analyze data to determine current step state */
     private int UpdateSteps(float simTime)
-    {/*
-        if (DataCount() > 1)
+    {
+        if (magnitude < lowMagnitudeThreshold)
         {
-
-            
-            if (dt >= Tse && !startStep && VerticalAcceleration(data[DataCount()-2].Time) > 30f)
+            stepDelay += Time.deltaTime;
+            if (stepDelay > endStepDetectionThreshold && stepping)
             {
-                t0 = simTime;
-                dt = 0f;
-                Debug.Log("Start"); Step step = new Step(foot, simTime, -1, false);
-                steps.Add(step);
-                startStep = true;
-                return STEP_START;
-            } else if (startStep && VerticalAcceleration(data[DataCount() - 2].Time) < -30f)
-            {
-                startStep = false;
-                Debug.Log("End");
                 Step step = LastStep;
-                step.End = simTime;
-                step.setFinished(true);
-                dt = simTime - t0;
+                step.EndTime = simTime - stepDelay;
+                step.EndPos = transform.position;
+                step.SetFinished(true);
+                //Debug.Log(Foot + " : " + step.Length);
+                stepDelay = 0f;
+                stepping = false;
                 return STEP_END;
             } else
             {
-                dt = simTime - t0;
-            }
-        }
-        
-        return NO_CHANGE;
-        */
-        
-        if (LastStep == null || (LastStep != null && LastStep.isFinished()))
-        {
-            if (!InAirCriterion())
-            {
-                // Stays grounded
-            } else
-            {
-                // Has just left floor
-                Step step = new Step(foot, simTime, -1, false);
-                steps.Add(step);
-                return STEP_START;
+
             }
         } else
         {
-            if (GroundedCriterion())
+            stepDelay = 0f;
+            if (magnitude > highMagnitudeThreshold && !stepping)
             {
-                // Has just landed
-                Step step = LastStep;
-                step.End = simTime;
-                step.setFinished(true);
-                return STEP_END;
-            } else
-            {
-                // Stays in the air
+                //Step step = new Step(Foot, simTime, -1, transform.position, false);
+                Step step = new Step(Foot, simTime, -1, lastPosition, false);
+                _steps.Add(step);
+                stepping = true;
+                return STEP_START;
             }
+        }
+        if (Vector3.Angle(-transform.forward, transform.position - lastPosition) > 100f)
+        {
+            if (!hesitating)
+            {
+                hesitating = true;
+            }
+            dt = 0f;
+            d += Vector3.Distance(transform.position, lastPosition);
+            if (d >= 0.03f)
+            {
+                Debug.Log("BACK");
+                d = 0f;
+            }
+        } else
+        {
+            if (hesitating)
+            {
+                dt += Time.deltaTime;
+            }
+            if (dt > 1f)
+            {
+                hesitating = false;
+                dt = 0f;
+                d = 0f;
+            }
+            
         }
         return NO_CHANGE;
-
-
-
-        /*
-        if (DataCount() > 2)
-        {
-            float h1 = data[DataCount() - 3].Position.y;
-            float h2 = data[DataCount() - 2].Position.y;
-            float h3 = data[DataCount() - 1].Position.y;
-            float threshold = 0.05f;
-            if (!startStep)
-            {
-                if (h3 > h2 && h2 > h1)
-                {
-                    if (h1 > threshold)
-                    {
-                        Debug.Log("Start Peak");
-                        startStep = true;
-                        tt.Add(DataCount() - 3);
-                        Step step = new Step(foot, simTime, -1, false);
-                        steps.Add(step);
-                        return STEP_START;
-                    }
-                }
-            }
-            else
-            {
-                if (h3 > threshold)
-                {
-                    tt.Add(DataCount() - 1);
-                }
-                else
-                {
-                    if (Mathf.Abs(h1-h2) < 0.01f && Mathf.Abs(h2-h3) < 0.01f)
-                    {
-
-                        Debug.Log("End Peak");
-                        startStep = false;
-                        Step step = LastStep;
-                        step.End = simTime;
-                        step.setFinished(true);
-                        return STEP_END;
-                    }
-                }
-            }
-        }
-       
-        return NO_CHANGE;*/
-    }
-
-    /* Updates trail renderer parameters if they are edited during the simulation */
-    private void CheckTrailRendererModifications()
-    {
-        if (trailRenderer.time != trailTime)
-        {
-            trailRenderer.time = trailTime;
-        }
-        if (trailRenderer.startWidth != trailSize)
-        {
-            trailRenderer.startWidth = trailSize;
-            trailRenderer.endWidth = trailSize;
-        }
-        if (trailRenderer.minVertexDistance != trailSensibility)
-        {
-            trailRenderer.minVertexDistance = trailSensibility;
-        }
-        if (trailRenderer.material != footTrailMaterial)
-        {
-            trailRenderer.material = footTrailMaterial;
-        }
-    }
-   
-    public void RegisterData(DataSnapshot footData)
-    {
-        data.Add(footData);
-    }
-
-    public void RegisterData(float time, Vector3 position, Vector3 rotation)
-    {
-        data.Add(new DataSnapshot(time, position, rotation));
     }
 
     public void RegisterData(float time)
     {
-        data.Add(new DataSnapshot(time, transform.position, transform.rotation.eulerAngles));
-    }
-
-    public DataSnapshot LastDataSnapshot()
-    {
-        if (DataCount() > 0)
-        {
-            return data[DataCount() - 1];
-        } else
-        {
-            return null;
-        }
-    }
-
-    public bool IsInAir()
-    {
-        if (LastStep == null)
-        {
-            return false;
-        }
-        else
-        {
-            return !LastStep.isFinished();
-        }
-    }
-
-    public int DataCount()
-    {
-        return data.Count;
-    }
- 
-    public DataSnapshot GetDataAtIndex(int i)
-    {
-        return data[i];
-    }
-
-    public DataSnapshot GetDataAtTime(float t)
-    {
-        return data[Converter.TimeToIndex(data, t)];
-    }
-
-    public Vector3 ProjectOnFloor(Vector3 v)
-    {
-        return new Vector3(v.x, 0, v.z);
-    }
-
-    public float DistanceTravelled()
-    {
-        if (DataCount() == 0)
-        {
-            return 0;
-        }
-        return GetDistance(0, DataCount()-1);
-    }
-
-    public float GetDistance(int i, int j)
-    {
-        return Vector3.Distance(ProjectOnFloor(data[i].Position), ProjectOnFloor(data[j].Position));
-    }
-
-    public float GetDistance(float t0, float tf)
-    {
-        return GetDistance(Converter.TimeToIndex(data, t0), Converter.TimeToIndex(data, tf));
+        _data.Add(new DataSnapshot(time, transform.position, transform.rotation.eulerAngles));
     }
 
     public void ResetData()
     {
-        data.Clear();
-        steps.Clear();
-    }
-
-    public float GetTime(int i, int j)
-    {
-        return data[j].Time - data[i].Time;
-    }
-
-    public float MeanSpeed()
-    {
-        float v = 0f;
-        int N = data.Count - 1;
-        if (N > 0)
-        {
-            v = DistanceTravelled() / (data[N].Time - data[0].Time);
-        }
-        return v;
-    }
-
-    public float VerticalSpeed(float t)
-    {
-        return VerticalSpeed(Converter.TimeToIndex(data, t));
-    }
-
-    public float VerticalSpeed(int i)
-    {
-        if (i <= 0 || i >= data.Count)
-        {
-            return -1;
-        }
-        float d = data[i].Position.y - data[i - 1].Position.y;
-        float t = data[i].Time - data[i - 1].Time;
-        float v = d / t;
-        if (v > 100f)
-        {
-            v = -1;
-        }
-        return Mathf.Abs(v);
-    }
-
-    public float VerticalAcceleration(float t)
-    {
-        return VerticalAcceleration(Converter.TimeToIndex(data, t));
-    }
-    public float VerticalAcceleration(int i)
-    {
-        if (i <= 0 || i >= data.Count - 1)
-        {
-            return -1;
-        }
-        if (VerticalSpeed(i) == -1 || VerticalSpeed(i + 1) == -1)
-        {
-            return -1;
-        }
-        else
-        {
-
-            float v = VerticalSpeed(i + 1) - VerticalSpeed(i);
-            float t = data[i + 1].Time - data[i - 1].Time;
-            return v / t;
-        }
-    }
-
-    private bool GroundedCriterion()
-    {
-        return transform.position.y <= 0.02f;
-    }
-
-    private bool InAirCriterion()
-    {
-        return transform.position.y > 0.02f;
-    }
-
-    public float StepTime(int i)
-    {
-        Step step = steps[i];
-        return step.Duration;
-    }
-
-    public float StepLength(int i)
-    {
-        Step step = steps[i];
-        return GetDistance(step.Start, step.End);
-    }
-
-    public float MeanStepLength(int i, int j)
-    {
-        float res = 0;
-        int N = j - i;
-        if (N == 0)
-        {
-            return -1;
-        }
-        for (int k = i; k < j; k++)
-        {
-            res += StepLength(k);
-        }
-        return res / N;
-    }
-
-    public float TotalMeanStepLength()
-    {
-        return MeanStepLength(0, steps.Count);
-
-    }
-
-    public float MeanStepTime(int i, int j)
-    {
-        float res = 0;
-        int N = j-i;
-        if (N == 0)
-        {
-            return -1;
-        }
-        for (int k = i; k < j; k++)
-        {
-            res += StepTime(k);
-        }
-        return res / N;
-    }
-
-    public float TotalMeanStepTime()
-    {
-        return MeanStepTime(0, steps.Count);
-
-    }
-
-    public float PauseAfterStep(int i)
-    {
-        return data[Converter.TimeToIndex(data, steps[i + 1].Start)].Time - data[Converter.TimeToIndex(data, steps[i].End)].Time;
-    }
-
-    public float MeanPause(int i, int j)
-    {
-        float res = 0;
-        int N = j - i;
-        if (N == 0)
-        {
-            return -1;
-        }
-        for (int k = i; k < j; k++)
-        {
-            res += PauseAfterStep(k);
-        }
-        return res / N;
-    }
-
-    public float TotalMeanPause()
-    {
-        return MeanPause(0, steps.Count - 1);
-
+        _data.Clear();
+        _steps.Clear();
     }
 
 }

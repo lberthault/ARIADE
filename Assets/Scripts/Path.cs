@@ -4,8 +4,28 @@ using UnityEngine;
 
 public class Path
 {
+    public enum PathName
+    {
+        A,
+        B,
+        C,
+        T,
+        M
+    }
+
+    public static string PATH_A = "A16.15.25.24.33.43.42.32.22.21.20";
+    public static string PATH_B = "B01.11.12.13.23.33.32.42.43.44.54";
+    public static string PATH_C = "C55.45.35.34.23.13.12.11.21.31.30";
+    public static string PATH_T = "T53.43.33.34.35.36"; //Test
+    public static string PATH_M = "M46.45.44.43.42.41.40.41.42.43.44.45.46"; //Baseline
+
     public string Name { get; set; }
     private List<Area> areas;
+
+    public int Count
+    {
+        get { return areas.Count; }
+    }
 
     public Path()
     {
@@ -44,19 +64,6 @@ public class Path
         return res;
     }
 
-    public int FirstOccurrence(Area area)
-    {
-        int res = -1;
-        for (int i = 0; i < areas.Count; i++)
-        {
-            if (areas[i].Equals(area))
-            {
-                res = i;
-                break;
-            }
-        }
-        return res;
-    }
     public bool Contains(Area area)
     {
         return areas.Contains(area);
@@ -77,11 +84,6 @@ public class Path
         {
             return null;
         }
-    }
-
-    public int Count()
-    {
-        return areas.Count;
     }
 
     public void Add(Area area)
@@ -119,7 +121,7 @@ public class Path
         }
         for (int i = 0; i < areas.Count; i++)
         {
-            res += areas[i].line + "" + areas[i].column;
+            res += areas[i].Line + "" + areas[i].Column;
             if (i != areas.Count - 1)
             {
                 res += ".";
@@ -136,7 +138,7 @@ public class Path
         return new Path(joinedAreas);
     }
 
-    public Area Pop()
+    public Area RemoveFirst()
     {
         Area area = areas[0];
         areas.RemoveAt(0);

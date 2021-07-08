@@ -5,14 +5,11 @@ using UnityEngine;
 
 /* Makes the link between the area detector gameobject equipped with a collider and the abstract Area class */
 public class AreaDetector : MonoBehaviour
-{/*
-    List<Renderer> fadeInRenderers;
-    List<Renderer> fadeOutRenderers;
-    bool fadeIn = false;
-    bool fadeOut = false;*/
-    float fadeOutDuration;
+{
+    private float fadeOutDuration;
 
     public int line, column;
+
     public Texture Texture { get; set; }
 
     public Area Area
@@ -22,11 +19,9 @@ public class AreaDetector : MonoBehaviour
 
     public void Start()
     {
-        //fadeInRenderers = new List<Renderer>();
-        //fadeOutRenderers = new List<Renderer>();
-        fadeOutDuration = GameObject.Find("SimulationManager").GetComponent<SimulationManager>().landmarkFadeOutDuration;
+        fadeOutDuration = GameObject.Find("GameManager").GetComponent<GameManager>().landmarkFadeOutDuration;
     }
-    public void DisplayLandmarks(HololensTracker.Direction from, bool checkBigArea)
+    public void DisplayLandmarks(Direction from, bool checkBigArea)
     {
         if (Area.InBigArea() && checkBigArea)
         {
@@ -49,13 +44,9 @@ public class AreaDetector : MonoBehaviour
                         Renderer r = (Renderer)renderer;
                         object[] parms = new object[1] { r };
                         r.material.mainTexture = Texture;
-                        SimulationManager.SetObscurable(r.gameObject);
-                        //fadeInRenderers.Add(r);
+                        Utils.SetObscurable(r.gameObject);
                         r.enabled = true;
                         ToFadeMode(r.material);
-                        //color = r.material.color;
-                        //alpha = 0f;
-                        //fadeIn = true;
                         StartCoroutine(nameof(FadeIn), parms);
                     }
                 }
@@ -65,10 +56,9 @@ public class AreaDetector : MonoBehaviour
 
     private IEnumerator FadeIn(object[] parms)
     {
-        fadeOutDuration = GameObject.Find("SimulationManager").GetComponent<SimulationManager>().landmarkFadeOutDuration;
+        fadeOutDuration = GameObject.Find("GameManager").GetComponent<GameManager>().landmarkFadeOutDuration;
 
         Renderer r = (Renderer) parms[0];
-        float alpha = 0f;
         Color color = r.material.color;
         color.a = 0f;
         Color newColor = new Color(color.r, color.g, color.b, 1f);
@@ -86,7 +76,7 @@ public class AreaDetector : MonoBehaviour
 
     private IEnumerator FadeOut(object[] parms)
     {
-        fadeOutDuration = GameObject.Find("SimulationManager").GetComponent<SimulationManager>().landmarkFadeOutDuration;
+        fadeOutDuration = GameObject.Find("GameManager").GetComponent<GameManager>().landmarkFadeOutDuration;
 
         Renderer r = (Renderer)parms[0];
         Color color = r.material.color;
@@ -117,36 +107,6 @@ public class AreaDetector : MonoBehaviour
         material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
     }
 
-    //float alpha = 0f;
-   // Color color;
-
-    public void Update()
-    {/*
-        if (fadeIn)
-        {
-
-            Color newColor = new Color(color.r, color.g, color.b, alpha);
-            alpha += Time.deltaTime / fadeOutDuration;
-            if (alpha >= 1)
-            {
-                fadeIn = false;
-                return;
-            }
-            r.material.SetColor("_Color", newColor);
-        } else if (fadeOut)
-        {
-            if (alpha <= 0)
-            {
-                r.enabled = false;
-                fadeOut = false;
-                return;
-            }
-            Color newColor = new Color(color.r, color.g, color.b, alpha);
-            alpha -= Time.deltaTime / fadeOutDuration;
-            r.material.SetColor("_Color", newColor);
-        }*/
-    }
-
     public void RemoveLandmarks(bool checkBigArea)
     {
         if (Area.InBigArea() && checkBigArea)
@@ -162,34 +122,25 @@ public class AreaDetector : MonoBehaviour
         {
             if (((Renderer)renderer).enabled)
             {
-                // r = (Renderer)renderer;
-                //color = r.material.color;
-                //alpha = 1f;
-                //fadeOut = true;
                 Renderer r = (Renderer)renderer;
                 object[] parms = new object[1] { r };
-                //fadeInRenderers.Add(r);
-                //ToFadeMode(r.material);
-                //color = r.material.color;
-                //alpha = 0f;
-                //fadeIn = true;
                 StartCoroutine(nameof(FadeOut), parms);
             }
         }
     }
 
-    private List<Landmark.LandmarkPosition> GetLandmarksFromDirection(HololensTracker.Direction from)
+    private List<Landmark.LandmarkPosition> GetLandmarksFromDirection(Direction from)
     {
         List<Landmark.LandmarkPosition> res = new List<Landmark.LandmarkPosition>();
         if (Area.InBigArea())
         {
-            if (Area.line == 2 && Area.column == 3)
+            if (Area.Line == 2 && Area.Column == 3)
             {
                 res.Add(Landmark.LandmarkPosition.TOP_RIGHT_FACE_DOWN);
-            } else if (Area.line == 2 && Area.column == 4)
+            } else if (Area.Line == 2 && Area.Column == 4)
             {
                 res.Add(Landmark.LandmarkPosition.BOTTOM_RIGHT_FACE_LEFT);
-            } else if (Area.line == 3 && Area.column == 3)
+            } else if (Area.Line == 3 && Area.Column == 3)
             {
                 res.Add(Landmark.LandmarkPosition.TOP_LEFT_FACE_RIGHT);
             } else
@@ -198,7 +149,7 @@ public class AreaDetector : MonoBehaviour
             }
         } else
         {
-            if (from == HololensTracker.Direction.DOWN || from == HololensTracker.Direction.UP)
+            if (from == Direction.DOWN || from == Direction.UP)
             {
                 res.Add(Landmark.LandmarkPosition.BOTTOM_LEFT_FACE_UP);
                 res.Add(Landmark.LandmarkPosition.BOTTOM_RIGHT_FACE_UP);

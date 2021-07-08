@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 /* Represents the data stored at a specific time by the trackers */
 public class DataSnapshot
@@ -11,8 +9,8 @@ public class DataSnapshot
 
     public DataSnapshot(float time, Vector3 position, Vector3 rotation)
     {
-        this.Time = time;
-        this.Position = position;
-        this.Rotation = rotation;
+        Time = time;
+        Position = position;
+        Rotation = rotation;
     }
 }

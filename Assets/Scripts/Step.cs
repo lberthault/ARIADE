@@ -4,40 +4,65 @@ using UnityEngine;
 
 public class Step
 {
-    public Foot foot;
+    private Foot _foot;
+    public Foot Foot
+    {
+        get { return _foot; }
+    }
 
     private bool finished;
-    public float Start { get; }
-    public float End { get; set; }
+    public float StartTime { get; }
+    public float EndTime { get; set; }
+    public Vector3 StartPos { get; }
+    public Vector3 EndPos { get; set; }
     public float Duration
     {
-        get { return End - Start; }
+        get { return EndTime - StartTime; }
     }
 
-    public Step(Foot foot, float start, float end)
+    public float Length 
     {
-        this.foot = foot;
-        this.Start = start;
-        this.End = end;
+        get { return Vector3.Distance(Utils.ProjectOnFloor(StartPos), Utils.ProjectOnFloor(EndPos)); }
+    }
+
+    public Step(Foot foot, float start, float end, Vector3 startPos)
+    {
+        this._foot = foot;
+        this.StartTime = start;
+        this.EndTime = end;
         this.finished = start < end;
+        this.StartPos = startPos;
     }
-
-    public Step(Foot foot, float start, float end, bool finished)
+    public Step(Foot foot, float start, float end, Vector3 startPos, bool finished)
     {
-        this.foot = foot;
-        this.Start = start;
-        this.End = end;
+        this._foot = foot;
+        this.StartTime = start;
+        this.EndTime = end;
+        this.StartPos = startPos;
+        if (GameManager.Instance.drawDebug)
+        {
+            GameObject marker = GameObject.Instantiate(GameManager.Instance.stepMarkerPrefab, startPos, Quaternion.identity, GameObject.Find("StepMarkers").transform);
+            marker.GetComponent<Renderer>().material.color = Color.green;
+            marker.name = "Start";
+        }
+
         this.finished = finished;
     }
 
-    public bool isFinished()
+    public bool IsFinished()
     {
         return finished;
     }
 
-    public void setFinished(bool finished)
+    public void SetFinished(bool finished)
     {
         this.finished = finished;
+        if (GameManager.Instance.drawDebug)
+        {
+            GameObject marker = GameObject.Instantiate(GameManager.Instance.stepMarkerPrefab, EndPos, Quaternion.identity, GameObject.Find("StepMarkers").transform);
+            marker.name = "End";
+            marker.GetComponent<Renderer>().material.color = Color.red;
+        }
     }
 
 }

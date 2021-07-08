@@ -6,10 +6,10 @@ using UnityEngine;
 public class HololensController : MonoBehaviour
 {
 
-    Rigidbody rb;
+    private Rigidbody rb;
     public float movementSpeed = 1.5f;
     public float mouseSensitivity = 2f;
-    float pitch, yaw;
+    private float pitch, yaw;
 
     void Start()
     {

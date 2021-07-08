@@ -5,46 +5,59 @@ using UnityEngine;
 public class Area
 {
    
-    /* An area is DEFINED by its line and column, its coordinates on the scene where (0,0) is the top left area */
-    public int line, column;
+    /* An area is defined by its line and column, its coordinates on the scene where (0,0) is the top left area */
+    private int _line, _column;
+    public int Line
+    {
+        get { return _line; }
+    }
+    public int Column
+    {
+        get { return _column; }
+    }
     /* The time at which the participant enters and leaves the area */
-    public float inTime, outTime;
+    private float _inTime, _outTime;
+    public float InTime
+    {
+        get { return _inTime; }
+    }
+    public float OutTime
+    {
+        get { return _outTime; }
+        set { _outTime = value; }
+    }    /* The total time the participant spent in the area */
+    public float TimeSpent
+    {
+        get { return _outTime - _inTime; }
+    }
 
     public Area(int line, int column)
     {
-        this.line = line;
-        this.column = column;
-        inTime = -1f;
-        outTime = -1f;
-    }
-
-    public Area(int line, int column, float inTime)
-    {
-        this.line = line;
-        this.column = column;
-        this.inTime = inTime;
-        this.outTime = -1f;
+        this._line = line;
+        this._column = column;
+        _inTime = -1f;
+        _outTime = -1f;
     }
 
     public Area(Area area, float inTime)
     {
-        this.line = area.line;
-        this.column = area.column;
-        this.inTime = inTime;
-        this.outTime = -1f;
+        this._line = area._line;
+        this._column = area._column;
+        this._inTime = inTime;
+        this._outTime = -1f;
     }
 
     public Area(Area area)
     {
-        this.line = area.line;
-        this.column = area.column;
-        this.inTime = -1f;
-        this.outTime = -1f;
+        this._line = area._line;
+        this._column = area._column;
+        this._inTime = -1f;
+        this._outTime = -1f;
     }
 
     override public string ToString()
     {
-        return "(" + line + "," + column + ")";
+        return "(" + _line + "," + _column + ")";
     }
 
     /* Two areas are equal iff they have the same coordinates */
@@ -52,21 +65,15 @@ public class Area
     {
         return (obj.GetType() == typeof(Area))
             && (obj != null)
-            && (((Area)obj).line == line)
-            && (((Area)obj).column == column);
+            && (((Area)obj)._line == _line)
+            && (((Area)obj)._column == _column);
     }
 
-    public override int GetHashCode() { return 100*line + column; }
-
-    /* The total time the participant spent in the area */
-    public float Time 
-    {
-        get { return outTime - inTime; }
-    }
+    public override int GetHashCode() { return 100*_line + _column; }
 
     public bool InBigArea()
     {
-        return (line == 2 || line == 3) && (column == 3 || column == 4);
+        return (_line == 2 || _line == 3) && (_column == 3 || _column == 4);
     }
 
     public static List<Area> BigAreaAreas()
@@ -82,19 +89,19 @@ public class Area
     /* The external border is the set of areas outside the trial area */
     public bool IsOnExternalBorder()
     {
-        return line == 0 || line == 5 || column == 0 || column == 6;
+        return _line == 0 || _line == 5 || _column == 0 || _column == 6;
     }
 
     /* The internal border is the set of the first areas behind the outermost landmarks */
     public bool IsOnInternalBorder()
     {
-        return !IsOnExternalBorder() && (line == 1 || line == 4 || column == 1 || column == 5);
+        return !IsOnExternalBorder() && (_line == 1 || _line == 4 || _column == 1 || _column == 5);
     }
 
     /* An area is in corner iff it is in a corner of the internal border */
     public bool IsInCorner()
     {
-        return (line == 1 && column == 1) || (line == 1 && column == 5) || (line == 4 && column == 1) || (line == 4 && column == 5);
+        return (_line == 1 && _column == 1) || (_line == 1 && _column == 5) || (_line == 4 && _column == 1) || (_line == 4 && _column == 5);
     }
 
     /* The number of decisions the participant can take at the intersection */
