@@ -155,4 +155,9 @@ public class Utils
         }
     }
 
+    public static string PathNameToString(Path.PathName pathName)
+    {
+        return (pathName == Path.PathName.M) ? "BASELINE" : pathName.ToString();
+    }
+
 }

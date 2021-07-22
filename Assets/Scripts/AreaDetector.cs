@@ -10,6 +10,9 @@ public class AreaDetector : MonoBehaviour
 
     public int line, column;
 
+    private const int VISIBLE_LANDMARK_LAYER = 8;
+    private const int INVISIBLE_LANDMARK_LAYER = 9;
+
     public Texture Texture { get; set; }
 
     public Area Area
@@ -19,8 +22,14 @@ public class AreaDetector : MonoBehaviour
 
     public void Start()
     {
-        fadeOutDuration = GameObject.Find("GameManager").GetComponent<GameManager>().landmarkFadeOutDuration;
+        Component[] renderers = GetComponentsInChildren(typeof(Renderer));
+        foreach (Component renderer in renderers)
+        {
+            renderer.gameObject.layer = INVISIBLE_LANDMARK_LAYER;
+            fadeOutDuration = GameObject.Find("GameManager").GetComponent<GameManager>().landmarkFadeOutDuration;
+        }
     }
+
     public void DisplayLandmarks(Direction from, bool checkBigArea)
     {
         if (Area.InBigArea() && checkBigArea)
@@ -42,6 +51,7 @@ public class AreaDetector : MonoBehaviour
                     if (!((Renderer)renderer).enabled)
                     {
                         Renderer r = (Renderer)renderer;
+                        r.gameObject.layer = VISIBLE_LANDMARK_LAYER;
                         object[] parms = new object[1] { r };
                         r.material.mainTexture = Texture;
                         Utils.SetObscurable(r.gameObject);
@@ -124,6 +134,7 @@ public class AreaDetector : MonoBehaviour
             {
                 Renderer r = (Renderer)renderer;
                 object[] parms = new object[1] { r };
+                r.gameObject.layer = INVISIBLE_LANDMARK_LAYER;
                 StartCoroutine(nameof(FadeOut), parms);
             }
         }

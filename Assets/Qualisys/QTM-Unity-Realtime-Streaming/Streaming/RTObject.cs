@@ -27,6 +27,25 @@ namespace QualisysRealTime.Unity
         void Start()
         {
             rtClient = RTClient.GetInstance();
+            if (ObjectName == "LFOOT" || ObjectName == "RFOOT")
+            {
+                if (GameManager.Instance.pathName == Path.PathName.M)
+                {
+                    RotationOffset.y = +180f;
+                }
+                else if (GameManager.Instance.pathName == Path.PathName.B)
+                {
+                    RotationOffset.y = +90f;
+                }
+                else
+                {
+                    RotationOffset.y = -90f;
+                }
+            } else if (ObjectName == "HMD")
+            {
+                RotationOffset.x = -12f;
+                RotationOffset.y = 90f;
+            }
         }
 
         // Update is called once per frame

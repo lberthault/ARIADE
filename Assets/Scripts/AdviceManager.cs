@@ -283,8 +283,12 @@ public class AdviceManager : MonoBehaviour
             {
                 position += AdvicePositionOffset(core.CurrentArea, nextArea, nextNextArea, true);
             }
-            rotation = AdviceRotation(core.CurrentArea, nextArea, nextNextArea, true);
-            AddArrow(nextArea, position, rotation);
+            if (nextArea != null && nextNextArea != null)
+            {
+
+                rotation = AdviceRotation(core.CurrentArea, nextArea, nextNextArea, true);
+                AddArrow(nextArea, position, rotation);
+            }
             //}
         }
         else if (gm.GetAdviceName() == Advice.LIGHT)
@@ -309,10 +313,14 @@ public class AdviceManager : MonoBehaviour
             }
             else
             {
+                if (nextArea == null || nextNextArea == null)
+                {
+                    return;
+                }
                 if (nextArea.InBigArea() && nextNextArea.InBigArea())
                 {
                     AnimateCompanion(0);
-                    object[] parms = new object[3] { core.CurrentArea, nextArea, nextNextArea };
+                    object[] parms = new object[4] { core.CurrentArea, nextArea, nextNextArea, gm.NextArea(2)};
                     StopCoroutine(nameof(MoveCompanionSimpleArea));
                     StartCoroutine(nameof(MoveCompanionBigArea), parms);
                 }

@@ -99,8 +99,7 @@ public class DataAnalyzer
         {
             float leftFootMeanStepLength = MeanStepLength(lFootSteps.GetRange(0, N));
             float rightFootMeanStepLength = MeanStepLength(rFootSteps.GetRange(0, N));
-            float AI = (leftFootMeanStepLength - rightFootMeanStepLength) / (0.5f * (leftFootMeanStepLength + rightFootMeanStepLength)) * 100f;
-            if (AI < 0) AI = -AI;
+            float AI = Mathf.Abs((leftFootMeanStepLength - rightFootMeanStepLength) / (0.5f * (leftFootMeanStepLength + rightFootMeanStepLength)) * 100f);
             return AI;
         } else
         {
@@ -145,7 +144,7 @@ public class DataAnalyzer
         }
         return res / N;
     }
-
+    /*
     public static float NetPauseAfterStep(List<Step> steps, int stepIndex)
     {
         if (steps.Count < stepIndex + 2)
@@ -213,28 +212,52 @@ public class DataAnalyzer
         }
         return res / N;
     }
+    */
+
+    public static float MeanPauseDuration(List<WalkingPause> pauses)
+    {
+        if (pauses.Count == 0) 
+            return 0;
+        float res = 0;
+        foreach (WalkingPause pause in pauses)
+        {
+            res += pause.Duration;
+        }
+        return res / pauses.Count;
+    }
+
+    public static float TotalPauseDuration(List<WalkingPause> pauses)
+    {
+        float res = 0;
+        foreach (WalkingPause pause in pauses)
+        {
+            res += pause.Duration;
+        }
+        return res;
+    }
 
     public static float MeanStepFrequency(List<Step> steps)
     {
         if (steps.Count == 0)
         {
-            return float.NaN;
+            return 0f;
         }
-        float end; 
-        if (!steps[steps.Count - 1].IsFinished())
+        float duration;
+        int count;
+        if (steps[steps.Count - 1].IsFinished())
         {
-            if (steps.Count == 1)
-            {
-                return float.NaN;
-            } else
-            {
-                end = steps[steps.Count - 2].EndTime;
-            }
+            duration = steps[steps.Count - 1].EndTime - steps[0].StartTime;
+            count = steps.Count;
         } else
         {
-            end = steps[steps.Count - 1].EndTime;
+            duration = steps[steps.Count - 2].EndTime - steps[0].StartTime;
+            count = steps.Count - 1;
         }
-        return steps.Count / (end - steps[0].StartTime);
+        if (duration <= 0f)
+        {
+            return 0f;
+        }
+        return count / duration;
     }
 
     /* Returns the current front foot */
@@ -295,7 +318,7 @@ public class DataAnalyzer
                 n++;
             }
         }
-        return 1f * n / N;
+        return 100f * n / N;
     }
 
     public static int NumberOfWrongAreas(List<PathError> errors)
@@ -308,23 +331,27 @@ public class DataAnalyzer
         return res;
     }
 
-    public static float ErrorDistance(List<DataSnapshot> data, List<PathError> errors)
+    public static float TotalDistanceWalkedDuringError(List<DataSnapshot> data, List<PathError> errors)
     {
         float res = 0;
         foreach (PathError error in errors)
         {
-            res += GetDistance(data, error.Path.Get(1).InTime, error.Path.GetLast().InTime);
+            res += DistanceWalkedDuringError(data, error);
         }
         return res;
     }
 
+    public static float DistanceWalkedDuringError(List<DataSnapshot> data, PathError error)
+    {
+        return GetDistance(data, error.WalkedPath.Get(1).InTime, error.WalkedPath.GetLast().OutTime);
+    }
 
     public static float ErrorTime(List<PathError> errors)
     {
         float res = 0;
         foreach (PathError error in errors)
         {
-            res += error.Time();
+            res += error.Duration();
         }
         return res;
     }
@@ -334,5 +361,34 @@ public class DataAnalyzer
         if (walkedPath.Count == 0)
             return -1;
         return (simTime - walkedPath.Get(0).InTime) / walkedPath.Count;
+    }
+
+    public static float TotalTimeSpentLookingAtLandmarks(Dictionary<Area, float> d)
+    {
+        float res = 0f;
+        foreach (Area area in d.Keys)
+        {
+            res += d[area];
+        }
+        return res;
+    }
+
+    public static float MeanTimeSpentLookingAtLandmarks(Dictionary<Area, float> d)
+    {
+        if (d.Count == 0)
+        {
+            return 0f;
+        }
+        return TotalTimeSpentLookingAtLandmarks(d) / d.Count;
+    }
+
+    public static float TotalTimeSpentLookingAtLandmarksDuringPauses(List<WalkingPause> pauses)
+    {
+        float res = 0f;
+        foreach (WalkingPause pause in pauses)
+        {
+            res += pause.TimeSpentLookingAtLandmarks;
+        }
+        return res;
     }
 }

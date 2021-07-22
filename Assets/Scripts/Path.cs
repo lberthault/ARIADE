@@ -12,14 +12,18 @@ public class Path
         T,
         M
     }
+    public static string PATH_A = "A16.15.25.24.33.43.42.32.22.21";
+    public static string PATH_B = "B01.11.12.13.23.33.32.42.43.44";
+    public static string PATH_C = "C55.45.35.34.23.13.12.11.21.31";
+    public static string PATH_T = "T53.43.33.34.35"; //Test
+    public static string PATH_M = "M46.45.44.43.42.41.42.43.44.45"; //Baseline
+    //public static string PATH_A = "A16.15.25.24.33.43.42.32.22.21.20";
+    //public static string PATH_B = "B01.11.12.13.23.33.32.42.43.44.54";
+    //public static string PATH_C = "C55.45.35.34.23.13.12.11.21.31.30";
+    //public static string PATH_T = "T53.43.33.34.35.36"; //Test
+    //public static string PATH_M = "M46.45.44.43.42.41.40.41.42.43.44.45.46"; //Baseline
 
-    public static string PATH_A = "A16.15.25.24.33.43.42.32.22.21.20";
-    public static string PATH_B = "B01.11.12.13.23.33.32.42.43.44.54";
-    public static string PATH_C = "C55.45.35.34.23.13.12.11.21.31.30";
-    public static string PATH_T = "T53.43.33.34.35.36"; //Test
-    public static string PATH_M = "M46.45.44.43.42.41.40.41.42.43.44.45.46"; //Baseline
-
-    public string Name { get; set; }
+    public PathName Name { get; set; }
     private List<Area> areas;
 
     public int Count
@@ -40,7 +44,7 @@ public class Path
     public Path(string strPath)
     {
         areas = new List<Area>();
-        Name = strPath.Substring(0, 1);
+        Name = (PathName)System.Enum.Parse(typeof(PathName), strPath.Substring(0, 1));
         string[] strCoords = strPath.Substring(1, strPath.Length - 1).Split('.');
         int line, column;
         foreach (string strCoord in strCoords)
@@ -114,11 +118,7 @@ public class Path
 
     override public string ToString()
     {
-        string res = "";
-        if (Name != null)
-        {
-            res += Name;
-        }
+        string res = Name.ToString();
         for (int i = 0; i < areas.Count; i++)
         {
             res += areas[i].Line + "" + areas[i].Column;

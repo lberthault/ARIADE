@@ -1,3 +1,0 @@
-Simulation time (s);Position vector;;;Euler rotation vector;;;Magnitude (m/s²);Mean speed (m/s);Nb Steps;Mean step length (m);Mean step time (s);Mean step pause (s)
-32,85771;-0,7113763;0,05971766;4,995773;358,9563;154,3267;357,1555;2,289344E-10;0,5979;24;0,7413418;0,4497806;0,899024
-33,17478;-0,9287634;0,1155818;5,393925;329,0864;157,1843;5,341308;0,1285155;0,6058632;24;0,7413418;0,4497806;0,899024

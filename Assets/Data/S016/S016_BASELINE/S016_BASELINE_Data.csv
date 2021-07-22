@@ -1,0 +1,39 @@
+Areas
+Area;Time spent in Area (s)
+(4,5);1,382203
+(4,4);1,772352
+(4,3);1,775962
+(4,2);1,882322
+(4,1);2,702377
+(4,0);1,737247
+(4,1);2,087496
+(4,2);1,695361
+(4,3);1,717505
+(4,4);1,72241
+(4,5);1,939896
+
+
+Steps
+Foot;Start time (s);End time (s);Duration (s);Length (m)
+Right;6,655101;7,637848;0,9827471;1,227112
+Right;8,107118;8,603189;0,4960709;1,146961
+Left;8,567399;9,805516;1,238117;1,120249
+Right;9,457639;10,36097;0,9033279;1,159163
+Right;11,48086;12,02016;0,5392962;0,9954544
+Right;12,32013;13,13171;0,8115807;0,9442823
+Left;12,8145;13,62641;0,8119106;1,276306
+Left;20,99431;21,59977;0,6054573;1,266744
+
+
+Landmarks
+Area;Time spent looking at landmarks (s)
+
+
+Errors
+Walked path;Duration (s);Distance walked (m)
+
+
+Pauses
+Duration (s);Area;Time spent looking at landmarks (s)
+
+

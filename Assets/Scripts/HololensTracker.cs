@@ -44,6 +44,7 @@ public class HololensTracker : MonoBehaviour
             if (trail.Initiated) trail.Clear();
         }
         lastPosition = transform.position;
+
     }
 
     public void Track(float simTime)
@@ -85,7 +86,7 @@ public class HololensTracker : MonoBehaviour
                 + DataAnalyzer.CurrentSpeed(_data) + ";"
                 + DataAnalyzer.MeanSpeed(_data) + ";"
                 + DataAnalyzer.DistanceTravelled(_data);
-        DataWriter.WriteData(dataFileName, header, data, false);
+        DataWriter.WriteDataSingleLine(dataFileName, header, data, false);
     }
    
     public void ResetData()

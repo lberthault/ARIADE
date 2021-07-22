@@ -2,13 +2,13 @@
 public class TrialConfig
 {
     public string ParticipantName { get; }
-    public Path Path { get; }
+    public Path.PathName PathName { get; }
     public Advice Advice { get; }
 
-    public TrialConfig(string participantName, Path path, Advice advice)
+    public TrialConfig(string participantName, Path.PathName pathName, Advice advice)
     {
         ParticipantName = participantName;
-        Path = path;
+        PathName = pathName;
         Advice = advice;
     }
 }

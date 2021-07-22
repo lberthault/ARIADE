@@ -4,13 +4,14 @@ using UnityEngine;
 using QTMRealTimeSDK;
 using QualisysRealTime.Unity;
 using UnityEditor;
+using System;
 
 public class GameManager : MonoBehaviour
 {
 
     private static GameManager _instance;
     public static GameManager Instance { get { return _instance; } }
-
+    private List<WalkingPause> walkingPauses = new List<WalkingPause>();
     public float SimTime { get; set; }
     private TrialConfig _trialConfig;
     public TrialConfig TrialConfig
@@ -27,8 +28,6 @@ public class GameManager : MonoBehaviour
     public const int TRIAL_NOT_STARTED = 0;
     public const int TRIAL_ONGOING = 1;
     public const int TRIAL_ENDED = 2;
-
-   
 
     private Path trialPath;
     private Path _remainingPath;
@@ -73,12 +72,13 @@ public class GameManager : MonoBehaviour
 
     [HideInInspector]
     public float lightPathDelayInSeconds = 0.002f;
-    private string dataFileName = "SimulationData";
+
+    private string dataFileName = "Summary";
     private QualisysModule qtm;
     private bool isTracking = false;
-    private FeetTracker feetTracker;
+    public FeetTracker feetTracker;
     private HololensTracker hololensTracker;
-    private HololensCore hololensCore;
+    public HololensCore hololensCore;
 
     public float AreaDetectorSize { get; set; }
 
@@ -178,10 +178,12 @@ public class GameManager : MonoBehaviour
     public Material lightPathMaterial;
     public Material lightPathWrongWayMaterial;
 
+    public Area CurrentArea
+    {
+        get { return hololensCore.CurrentArea; }
+    }
 
 
-
-   
 
     private void Awake()
     {
@@ -253,7 +255,7 @@ public class GameManager : MonoBehaviour
         string suffix = ".png";
         bool bigAreaIsDone = false;
         int currentTexture = 1;
-        for (int i = 1; i < trialPath.Count - 2; i++)
+        for (int i = 1; i < trialPath.Count - 1; i++)
         {
             Area a = trialPath.Get(i);
             if (!a.InBigArea())
@@ -345,7 +347,7 @@ public class GameManager : MonoBehaviour
             case Path.PathName.T: trialPath = new Path(Path.PATH_T); break;
             case Path.PathName.M: trialPath = new Path(Path.PATH_M); break;
         }
-        _trialConfig = new TrialConfig(participantName, trialPath, _advice);
+        _trialConfig = new TrialConfig(participantName, trialPath.Name, _advice);
         qtm = new QualisysModule();
         _remainingPath = trialPath;
 
@@ -420,18 +422,34 @@ public class GameManager : MonoBehaviour
 
     public void EndTrial()
     {
+        CleanWalkingPauses();
+        feetTracker.CleanSteps();
+        feetTracker.LFoot.CleanSteps();
+        feetTracker.RFoot.CleanSteps();
         SetTrialState(TRIAL_ENDED);
         StopCoroutine(nameof(Track));
         isTracking = false;
+        EditorApplication.isPlaying = false;
     }
 
     // The data written in the synthetical file at the end of the trial
     public void WriteData()
     {
-        string header =
+        WriteSummaryData();
+        WriteAreasData();
+        WriteStepsData();
+        WriteLandmarksData();
+        WriteErrorsData();
+        WritePausesData();
+    }
+
+    private void WriteSummaryData()
+    {
+        string adviceStr = (TrialConfig.PathName == Path.PathName.M) ? "" : TrialConfig.Advice.ToString();
+        string summaryHeader =
             "Advice;"
             + "Path;"
-            + "Path succeeded (0=yes, 1=no);"
+            + "Path succeeded (0=no, 1=yes);"
             + "Trial time (s);"
             + "Distance travelled (m);"
             + "Walked path;"
@@ -445,24 +463,28 @@ public class GameManager : MonoBehaviour
             + "Step length (m);"
             + "Walk speed (m/s);"
             + "Step frequency (/s);"
-            + "Proportion of time left foot was in front;"
+            + "Proportion of time left foot was in front (%);"
             + "Step length asymmetry index (%);"
             + "Step length ratio;"
             + "Number of pauses;"
-            + "Mean pause duration (s)";
-        string data =
-                _trialConfig.Advice + ";"
-                + _trialConfig.Path.Name + ";"
-                + ((TrialState == TRIAL_ENDED) ? 0 : 1) + ";"
+            + "Mean pause duration (s);"
+            + "Total pause duration (s);"
+            + "Mean time spent looking at landmarks (s);"
+            + "Total time spent looking at landmarks (s);"
+            + "Total time spent looking at landmarks during pauses (s)";
+        string summaryData =
+                adviceStr + ";"
+                + Utils.PathNameToString(TrialConfig.PathName) + ";"
+                + ((TrialState == TRIAL_ENDED) ? 1 : 0) + ";"
                 + SimTime + ";"
                 + DataAnalyzer.DistanceTravelled(hololensTracker.Data) + ";"
-                + hololensCore.WalkedPath + ";"
+                + hololensCore.WalkedPath.ToString().Substring(1, hololensCore.WalkedPath.ToString().Length - 1) + ";"
                 + hololensCore.WalkedPath.Count + ";"
                 + DataAnalyzer.AverageTimeInArea(SimTime, hololensCore.WalkedPath) + ";"
                 + hololensCore.NumberOfErrors() + ";"
                 + DataAnalyzer.NumberOfWrongAreas(hololensCore.Errors) + ";"
                 + DataAnalyzer.ErrorTime(hololensCore.Errors) + ";"
-                + DataAnalyzer.ErrorDistance(hololensTracker.Data, hololensCore.Errors) + ";"
+                + DataAnalyzer.TotalDistanceWalkedDuringError(hololensTracker.Data, hololensCore.Errors) + ";"
                 + feetTracker.StepCount + ";"
                 + DataAnalyzer.MeanStepLength(feetTracker.Steps) + ";"
                 + DataAnalyzer.MeanSpeed(hololensTracker.Data) + ";"
@@ -470,14 +492,105 @@ public class GameManager : MonoBehaviour
                 + DataAnalyzer.LeftFootInFrontRate(feetTracker.LFoot.Data, feetTracker.RFoot.Data) + ";"
                 + DataAnalyzer.StepLengthAsymmetryIndex(feetTracker.LFoot.Steps, feetTracker.RFoot.Steps) + ";"
                 + DataAnalyzer.StepLengthRatio(feetTracker.LFoot.Steps, feetTracker.RFoot.Steps) + ";"
-                + DataAnalyzer.NumberOfPauses(feetTracker.Steps, 0.5f) + ";"
-                + DataAnalyzer.MeanRelativePause(feetTracker.Steps, 0.5f);
-        /* Déviation axe de marche(0 = oui, 1 = non)	
-         * Nombre d'hésitations	
-         * Temps d'hésitations(s) */
-        // Hésitation ===== pied en l'air qui change de direction OU pas en arrière
-        // Piétinement
-        DataWriter.WriteData(dataFileName, header, data, true);
+                + walkingPauses.Count + ";"
+                + DataAnalyzer.MeanPauseDuration(walkingPauses) + ";"
+                + DataAnalyzer.TotalPauseDuration(walkingPauses) + ";"
+                + DataAnalyzer.MeanTimeSpentLookingAtLandmarks(hololensCore.TimeSpentLookingAtLandmarksInArea) + ";"
+                + DataAnalyzer.TotalTimeSpentLookingAtLandmarks(hololensCore.TimeSpentLookingAtLandmarksInArea) + ";"
+                + DataAnalyzer.TotalTimeSpentLookingAtLandmarksDuringPauses(walkingPauses);
+        DataWriter.WriteDataSingleLine(dataFileName, summaryHeader, summaryData, true);
+    }
+
+    private void WriteAreasData()
+    {
+        string areasTitle = "Areas";
+        string areasHeader =
+           "Area;"
+           + "Time spent in Area (s)";
+        string[] areasData = new string[hololensCore.WalkedPath.Count];
+        for (int i = 0; i < hololensCore.WalkedPath.Count; i++)
+        {
+            areasData[i] =
+                hololensCore.WalkedPath.Get(i) + ";"
+                + hololensCore.WalkedPath.Get(i).TimeSpent;
+        }
+        DataWriter.WriteDataMultipleLines("Data", areasTitle, areasHeader, areasData, false);
+    }
+
+    private void WritePausesData()
+    {
+        string pausesTitle = "Pauses";
+        string pausesHeader =
+           "Duration (s);"
+           + "Area;"
+           + "Time spent looking at landmarks (s)";
+        string[] pausesData = new string[walkingPauses.Count];
+        for (int i = 0; i < walkingPauses.Count; i++)
+        {
+            pausesData[i] =
+                walkingPauses[i].Duration + ";"
+                + walkingPauses[i].PauseArea + ";"
+                + walkingPauses[i].TimeSpentLookingAtLandmarks;
+        }
+        DataWriter.WriteDataMultipleLines("Data", pausesTitle, pausesHeader, pausesData, false);
+    }
+
+    private void WriteErrorsData()
+    {
+        string errorsTitle = "Errors";
+        string errorsHeader =
+           "Walked path;"
+           + "Duration (s);"
+           + "Distance walked (m)";
+        string[] errorsData = new string[hololensCore.NumberOfErrors()];
+        for (int i = 0; i < hololensCore.NumberOfErrors(); i++)
+        {
+            errorsData[i] =
+                hololensCore.Errors[i].WalkedPath.ToString().Substring(1, hololensCore.Errors[i].WalkedPath.ToString().Length - 1) + ";"
+                + hololensCore.Errors[i].Duration() + ";"
+                + DataAnalyzer.DistanceWalkedDuringError(hololensTracker.Data, hololensCore.Errors[i]);
+        }
+        DataWriter.WriteDataMultipleLines("Data", errorsTitle, errorsHeader, errorsData, false);
+    }
+
+    private void WriteStepsData()
+    {
+        string stepsTitle = "Steps";
+        string stepsHeader =
+         "Foot;"
+         + "Start time (s);"
+         + "End time (s);"
+         + "Duration (s);"
+         + "Length (m)";
+        string[] stepsData = new string[feetTracker.StepCount];
+        for (int i = 0; i < feetTracker.StepCount; i++)
+        {
+            stepsData[i] =
+                feetTracker.Steps[i].Foot + ";"
+                + feetTracker.Steps[i].StartTime + ";"
+                + feetTracker.Steps[i].EndTime + ";"
+                + feetTracker.Steps[i].Duration + ";"
+                + feetTracker.Steps[i].Length;
+        }
+        DataWriter.WriteDataMultipleLines("Data", stepsTitle, stepsHeader, stepsData, false);
+    }
+
+    private void WriteLandmarksData()
+    {
+        string landmarksTitle = "Landmarks";
+        string landmarksHeader =
+            "Area;"
+            + "Time spent looking at landmarks (s)";
+        string[] landmarksData = new string[hololensCore.TimeSpentLookingAtLandmarksInArea.Count];
+        int j = 0;
+        foreach (Area area in hololensCore.TimeSpentLookingAtLandmarksInArea.Keys)
+        {
+            landmarksData[j] =
+                area + ";"
+                + hololensCore.TimeSpentLookingAtLandmarksInArea[area];
+            j++;
+        }
+        DataWriter.WriteDataMultipleLines("Data", landmarksTitle, landmarksHeader, landmarksData, false);
     }
 
     public Area NextArea(int i)
@@ -591,4 +704,43 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public void StartWalkingPause(WalkingPause pause)
+    {
+        walkingPauses.Add(pause);
+    }
+
+    public void EndWalkingPause(WalkingPause pause)
+    {
+        if (pause == null)
+        {
+            return;
+        }
+        pause.SetFinished(SimTime);
+        //Debug.Log("END PAUSE : " + pause.Duration + "s");
+    }
+
+    public void UpdateWalkingPause(float dt)
+    {
+        if (feetTracker.currentPause == null)
+        {
+            return;
+        }
+        if (!feetTracker.currentPause.Finished)
+        {
+            feetTracker.currentPause.AddTimeSpentLookingAtLandmarks(dt);
+        }
+    }
+
+    public void CleanWalkingPauses()
+    {
+        List<WalkingPause> relevantPauses = new List<WalkingPause>();
+        for (int i = 0; i < walkingPauses.Count; i++)
+        {
+            if (walkingPauses[i].Relevant)
+            {
+                relevantPauses.Add(walkingPauses[i]);
+            }
+        }
+        walkingPauses = relevantPauses;
+    }
 }

@@ -1,5 +1,0 @@
-Path;Advice;Simulation time (s);Distance travelled (m);Mean speed (m/s);Number of steps;Mean step frequency (step/s);Percent of left foot in front;Walked path;Number of areas covered;Average time in area (s);Nbr errors; Nbr wrong areas;Total error time (s);Total error distance (m)
-A;PEANUT;71,61198;23,98534;0,3349347;3;0,04673576;0,2103666;16.15.25.24.33.43.42.32.22.21;10;7,161198;0;0;0;0
-A;LIGHT;39,22429;23,56654;0,6008151;1;-1;0,4949438;16.15.25.24.33.43.42.32.22.21;10;3,922429;0;0;0;0
-A;LIGHT;39,20631;22,17186;0,5655176;2;0,2624995;0,3555684;16.15.25.24.33.43.42.32.22.21;10;3,920631;0;0;0;0
-C;ARROW;31,58022;15,29147;0,4842103;2;0,1085596;0,3900463;55.45.35.34.44.54;6;5,263371;1;2;-27,81168;2,554318

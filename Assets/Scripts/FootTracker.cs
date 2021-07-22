@@ -11,6 +11,7 @@ public class FootTracker : MonoBehaviour
     public const int NO_CHANGE = 0;
     public const int STEP_START = 1;
     public const int STEP_END = 2;
+    public const int STEP_REMOVE = 3;
 
     public Foot Foot;
 
@@ -67,7 +68,7 @@ public class FootTracker : MonoBehaviour
     private bool stepping = false;
     private float stepDelay = 0f;
     private float endStepDetectionThreshold = 0.2f; //0.2f
-    private float highMagnitudeThreshold = 0.8f; //1f
+    private float highMagnitudeThreshold = 0.2f; //1f
     private float lowMagnitudeThreshold = 0.1f; //0.3f
 
     public Step LastStep
@@ -151,8 +152,7 @@ public class FootTracker : MonoBehaviour
             "Mean speed (m/s);" +
             "Nb Steps;" +
             "Mean step length (m);" +
-            "Mean step time (s);" +
-            "Mean step pause (s)";
+            "Mean step time (s)";
         string data = simTime + ";"
                 + transform.position.x + ";"
                 + transform.position.y + ";"
@@ -164,17 +164,49 @@ public class FootTracker : MonoBehaviour
                 + DataAnalyzer.MeanSpeed(this._data) + ";"
                 + StepCount + ";"
                 + DataAnalyzer.MeanStepLength(_steps) + ";"
-                + DataAnalyzer.MeanStepTime(_steps) + ";"
-                + DataAnalyzer.MeanNetPause(_steps);
-        DataWriter.WriteData(dataFileName, header, data, false);
+                + DataAnalyzer.MeanStepTime(_steps);
+        DataWriter.WriteDataSingleLine(dataFileName, header, data, false);
     }
 
-    float d = 0f;
-    float dt = 0f;
+    float hesitationDistanceThreshold = 0.03f;
+    float hesitationDelayThreshold = 1f;
+    float hesitationDistance = 0f;
+    float hesitationDelay = 0f;
     bool hesitating = false;
+
+    Vector3 lastEndPosition;
     /* Analyze data to determine current step state */
     private int UpdateSteps(float simTime)
     {
+        /* HESITATION DETECTION */
+        if (Vector3.Angle(-transform.forward, transform.position - lastPosition) > 100f)
+        {
+            if (!hesitating)
+            {
+                hesitating = true;
+            }
+            hesitationDelay = 0f;
+            hesitationDistance += Vector3.Distance(transform.position, lastPosition);
+            if (hesitationDistance >= hesitationDistanceThreshold)
+            {
+                hesitationDistance = 0f;
+            }
+        }
+        else
+        {
+            if (hesitating)
+            {
+                hesitationDelay += Time.deltaTime;
+            }
+            if (hesitationDelay > hesitationDelayThreshold)
+            {
+                hesitating = false;
+                hesitationDelay = 0f;
+                hesitationDistance = 0f;
+            }
+        }
+
+        /* STEP DETECTION */
         if (magnitude < lowMagnitudeThreshold)
         {
             stepDelay += Time.deltaTime;
@@ -183,10 +215,15 @@ public class FootTracker : MonoBehaviour
                 Step step = LastStep;
                 step.EndTime = simTime - stepDelay;
                 step.EndPos = transform.position;
+                lastEndPosition = transform.position;
                 step.SetFinished(true);
                 //Debug.Log(Foot + " : " + step.Length);
                 stepDelay = 0f;
                 stepping = false;
+                if (step.Duration < 0.1f || step.Duration > 5f || step.Length < 0.01f || step.Length > 3f)
+                {
+                    Steps.Remove(step);
+                }
                 return STEP_END;
             } else
             {
@@ -198,38 +235,19 @@ public class FootTracker : MonoBehaviour
             if (magnitude > highMagnitudeThreshold && !stepping)
             {
                 //Step step = new Step(Foot, simTime, -1, transform.position, false);
-                Step step = new Step(Foot, simTime, -1, lastPosition, false);
+                Vector3 pos;
+                if (lastEndPosition == Vector3.zero)
+                {
+                    pos = lastPosition;
+                } else
+                {
+                    pos = lastEndPosition;
+                }
+                Step step = new Step(Foot, simTime, -1, pos, false);
                 _steps.Add(step);
                 stepping = true;
                 return STEP_START;
             }
-        }
-        if (Vector3.Angle(-transform.forward, transform.position - lastPosition) > 100f)
-        {
-            if (!hesitating)
-            {
-                hesitating = true;
-            }
-            dt = 0f;
-            d += Vector3.Distance(transform.position, lastPosition);
-            if (d >= 0.03f)
-            {
-                Debug.Log("BACK");
-                d = 0f;
-            }
-        } else
-        {
-            if (hesitating)
-            {
-                dt += Time.deltaTime;
-            }
-            if (dt > 1f)
-            {
-                hesitating = false;
-                dt = 0f;
-                d = 0f;
-            }
-            
         }
         return NO_CHANGE;
     }
@@ -244,5 +262,26 @@ public class FootTracker : MonoBehaviour
         _data.Clear();
         _steps.Clear();
     }
+    public void CleanSteps()
+    {
+        for (int i = 0; i < StepCount; i++)
+        {
+            if (!Steps[i].IsFinished())
+            {
+                Steps.RemoveAt(i);
+            }
+        }
+        CheckSteps();
+    }
 
+    private void CheckSteps()
+    {
+        for (int i = 0; i < Steps.Count; i++)
+        {
+            if (Steps[i].IsFinished() && (Steps[i].Duration < 0.1f || Steps[i].Duration > 2f || Steps[i].Length < 0.1f || Steps[i].Length > 2f))
+            {
+                Steps.RemoveAt(i);
+            }
+        }
+    }
 }

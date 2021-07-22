@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 5315803403626654415}
   - component: {fileID: 5315803403626654414}
-  - component: {fileID: 1929728264}
   m_Layer: 0
   m_Name: SimulationManager
   m_TagString: Untagged
@@ -44,14 +43,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a9a039350a76a9949837adb90e367d2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  participantName: DATA
-  _advice: 1
-  pathName: 2
-  _adviceConfigName: 2
-  drawLines: 1
-  pathLineMaterial: {fileID: 2100000, guid: 3c540979fa7b4f143bde79c6fb9fe6e7, type: 2}
-  pathLineHeight: 0.7
-  pathLineWidth: 0.03
+  lightPathDelayInSeconds: 0.002
+  feetTracker: {fileID: 0}
+  hololensCore: {fileID: 0}
+  participantName: S002
+  _advice: 2
+  pathName: 1
+  _adviceConfigName: 3
+  hololens: {fileID: 0}
+  feet: {fileID: 0}
+  enableQualisys: 1
+  moveSpeed: 1
+  mouseSensitivity: 2
   hideInvisibleObjects: 0
   invisibleMaterial: {fileID: 2100000, guid: d22b7b5f2ff546541a8652b4de8a6450, type: 2}
   invisibleObjects:
@@ -65,11 +68,12 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   obscurableObjects: []
-  enableQualisys: 0
-  moveSpeed: 1
-  mouseSensitivity: 2
-  hololens: {fileID: 0}
-  feet: {fileID: 0}
+  lightPathWidth: 0.5
+  landmarkFadeOutDuration: 0.5
+  drawDebug: 1
+  pathLineMaterial: {fileID: 2100000, guid: 3c540979fa7b4f143bde79c6fb9fe6e7, type: 2}
+  pathLineHeight: 0.7
+  pathLineWidth: 0.03
   arrowPrefab: {fileID: 4599282483956589419, guid: 8fc8e48d227dbf74699060a57b77a8b1,
     type: 3}
   peanutPrefab: {fileID: 512396552925032004, guid: dbc1b5d1410f8474fbb872a1c1ce35e1,
@@ -83,25 +87,3 @@ MonoBehaviour:
   lightPathMaterial: {fileID: 2100000, guid: 2acec0dfd39c5314c857a737f9eef267, type: 2}
   lightPathWrongWayMaterial: {fileID: 2100000, guid: f4b10ed9f60954846bab752498431138,
     type: 2}
-  lightPathWidth: 0.5
-  landmarkFadeOutDuration: 0.5
-  lightPathDelayInSeconds: 0.002
---- !u!114 &1929728264
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5315803403626654417}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b55691ad5b034fe6966763a6e23818d2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  trackedTargetType: 0
-  trackedHandness: 3
-  trackedHandJoint: 2
-  transformOverride: {fileID: 0}
-  additionalOffset: {x: 0, y: 0, z: 0}
-  additionalRotation: {x: 0, y: 0, z: 0}
-  updateSolvers: 1

@@ -1,2 +1,0 @@
-Path;Advice;Simulation time (s);Distance travelled (m);Mean speed (m/s);Number of steps;Mean step frequency (step/s);Percent of left foot in front;Walked path;Number of areas covered;Average time in area (s);Nbr errors; Nbr wrong areas;Total error time (s);Total error distance (m)
-C;LIGHT;66,33692;25,53066;0,3848635;0;-1;1;55.45.35.34.23.13.12.11.21.31;10;6,633692;0;0;0;0

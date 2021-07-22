@@ -63,8 +63,8 @@ public class Area
     /* Two areas are equal iff they have the same coordinates */
     public override bool Equals(object obj)
     {
-        return (obj.GetType() == typeof(Area))
-            && (obj != null)
+        return (obj != null)
+            && (obj.GetType() == typeof(Area))
             && (((Area)obj)._line == _line)
             && (((Area)obj)._column == _column);
     }
